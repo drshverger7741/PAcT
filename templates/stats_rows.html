@@ -1,0 +1,12 @@
+{% for row in stats %}
+<tr>
+    <td>{{ row.date }}</td>
+    <td>{{ row.active_seconds | hours }}</td>
+    <td>{{ row.idle_seconds | hours }}</td>
+    <td>{{ row.locked_seconds | hours }}</td>
+    <td>{{ row.no_session_seconds | hours }}</td>
+    <td>{{ row.sleep_seconds | hours }}</td>
+    <td>{{ row.shutdown_seconds | hours }}</td>
+    <td>{{ row.unknown_seconds | hours }}</td>
+</tr>
+{% endfor %}

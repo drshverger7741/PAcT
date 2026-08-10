@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="ru" data-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Настройки - Activity Monitor</title>
+    <link rel="stylesheet" href="/static/pico.min.css">
+</head>
+<body>
+    <nav class="container-fluid">
+        <ul>
+            <li><strong>PAcT</strong></li>
+        </ul>
+        <ul>
+            <li><a href="/">Статистика</a></li>
+            <li><a href="/settings" class="secondary">Настройки</a></li>
+        </ul>
+    </nav>
+    <main class="container">
+        <section>
+            <h2>Настройки мониторинга</h2>
+            <form action="/settings" method="post">
+                <label for="idle_threshold">
+                    Порог бездействия (секунды)
+                    <input type="number" id="idle_threshold" name="idle_threshold" value="{{ idle_threshold }}" min="5" required>
+                    <small>Через сколько секунд отсутствия активности переходить в режим "Простой".</small>
+                </label>
+
+                <label for="check_interval">
+                    Частота проверки активности (секунды)
+                    <input type="number" id="check_interval" name="check_interval" value="{{ check_interval }}" min="1" required>
+                    <small>Как часто опрашивать систему о вводе пользователя.</small>
+                </label>
+
+                <label for="flush_interval">
+                    Интервал сохранения в БД (секунды)
+                    <input type="number" id="flush_interval" name="flush_interval" value="{{ flush_interval }}" min="5" required>
+                    <small>Как часто сбрасывать накопленную статистику из памяти в файл базы данных.</small>
+                </label>
+                
+                <button type="submit">Сохранить изменения</button>
+            </form>
+        </section>
+
+        <hr>
+
+        <section>
+            <h3>Управление сервисом</h3>
+            <p>Вы можете полностью выключить сервис мониторинга. После этого веб-интерфейс перестанет быть доступным, и статистика перестанет собираться.</p>
+            <button id="shutdown-btn" class="contrast">Выключить сервис</button>
+        </section>
+
+        <script>
+            document.getElementById('shutdown-btn').addEventListener('click', function() {
+                if (confirm('Вы уверены, что хотите полностью выключить сервис мониторинга?')) {
+                    fetch('/api/shutdown', { method: 'POST' })
+                        .then(response => {
+                            if (response.ok) {
+                                document.body.innerHTML = `
+                                    <main class="container" style="text-align: center; margin-top: 100px;">
+                                        <h1>Сервис выключен</h1>
+                                        <p>Все данные сохранены. Теперь вы можете закрыть эту вкладку.</p>
+                                    </main>
+                                `;
+                            } else {
+                                alert('Ошибка при попытке выключить сервис.');
+                            }
+                        })
+                        .catch(error => {
+                            // Ошибка ожидаема, так как сервер закрывается
+                            document.body.innerHTML = `
+                                    <main class="container" style="text-align: center; margin-top: 100px;">
+                                        <h1>Сервис выключен</h1>
+                                        <p>Связь с сервером разорвана. Все данные сохранены.</p>
+                                    </main>
+                                `;
+                        });
+                }
+            });
+        </script>
+    </main>
+</body>
+</html>

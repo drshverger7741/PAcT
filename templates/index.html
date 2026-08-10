@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="ru" data-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Activity Monitor</title>
+    <!-- Pico.css Local -->
+    <link rel="stylesheet" href="/static/pico.min.css">
+    <!-- HTMX Local -->
+    <script src="/static/htmx.min.js"></script>
+    <style>
+        .state-indicator {
+            display: flex;
+            align-items: center;
+            font-weight: bold;
+        }
+        table th, table td {
+            text-align: center;
+        }
+        nav li {
+            list-style: none;
+        }
+    </style>
+</head>
+<body>
+    <main class="container">
+        <nav>
+            <ul>
+                <li><strong>PAcT</strong></li>
+            </ul>
+            <ul>
+                <li><a href="/settings" class="secondary">Настройки</a></li>
+                <li id="current-state-container" class="state-indicator" hx-get="/api/state" hx-trigger="load, every 5s" hx-swap="innerHTML">
+                    Загрузка состояния...
+                </li>
+            </ul>
+        </nav>
+
+        <section id="stats-section">
+            <figure>
+                <table role="grid">
+                    <thead>
+                        <tr>
+                            <th>День</th>
+                            <th>Активен</th>
+                            <th>Простой</th>
+                            <th>Заблокирован</th>
+                            <th>Нет сеанса</th>
+                            <th>Сон</th>
+                            <th>Выключен</th>
+                            <th>Неизвестно</th>
+                        </tr>
+                    </thead>
+                    <tbody id="stats-table-body" hx-get="/api/stats" hx-trigger="every 30s" hx-swap="innerHTML">
+                        {% include 'stats_rows.html' %}
+                    </tbody>
+                </table>
+            </figure>
+        </section>
+    </main>
+
+</body>
+</html>

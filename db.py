@@ -5,16 +5,13 @@ from datetime import date
 from typing import List, Dict, Any
 
 def get_db_path() -> str:
-    """Возвращает путь к файлу БД рядом с исполняемым файлом."""
+    """Возвращает путь к папке приложения."""
     if getattr(sys, 'frozen', False):
-        # Если запущено как exe
-        base_dir = os.path.dirname(sys.executable)
-    else:
-        # Если запущено как скрипт
-        base_dir = os.path.dirname(os.path.abspath(__file__))
-    return os.path.join(base_dir, "activity_monitor.db")
+        return os.path.dirname(sys.executable)
+    return os.path.dirname(os.path.abspath(__file__))
 
-DB_PATH = get_db_path()
+DB_PATH = os.path.join(get_db_path(), "activity_monitor.db")
+LOG_PATH = os.path.join(get_db_path(), "app.log")
 
 async def init_db():
     """Инициализация таблиц в БД."""

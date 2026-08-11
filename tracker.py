@@ -3,8 +3,11 @@ import ctypes
 import ctypes.wintypes
 import threading
 import time
+import logging
 from datetime import date, datetime
 from typing import Dict, Optional
+
+logger = logging.getLogger(__name__)
 
 # WinAPI Constants
 WTS_SESSION_LOCK = 0x7
@@ -191,7 +194,7 @@ class ActivityTracker:
                     await self.flush_to_db()
 
             except Exception as e:
-                print(f"Tracker error: {e}")
+                logger.exception(f"Tracker error: {e}")
                 await asyncio.sleep(1)
 
     async def stop(self):

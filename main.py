@@ -4,9 +4,30 @@ import socket
 import sys
 import os
 import uvicorn
+import logging
 import db
 from tracker import ActivityTracker
 from web import app, init_web
+
+# Настройка логирования
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s [%(levelname)s] %(message)s',
+    handlers=[
+        logging.FileHandler(db.LOG_PATH, encoding='utf-8'),
+        logging.StreamHandler(sys.stdout) if sys.stdout else logging.NullHandler()
+    ]
+)
+logger = logging.getLogger(__name__)
+
+class LoggerWriter:
+    def __init__(self, level):
+        self.level = level
+    def write(self, message):
+        if message.strip():
+            self.level(message.strip())
+    def flush(self):
+        pass
 
 def is_port_in_use(port: int) -> bool:
     with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
@@ -29,26 +50,33 @@ async def main():
     # Инициализация веб-интерфейса
     init_web(tracker, db, stop_event)
     
-    print(f"Starting server on http://localhost:{port}")
+    logger.info(f"Starting server on http://localhost:{port}")
     
-    # Настройка логов для uvicorn в режиме без консоли
-    log_config = uvicorn.config.LOGGING_CONFIG.copy()
-    if getattr(sys, 'frozen', False) or os.path.basename(sys.executable).lower() == 'pythonw.exe':
-        # В режиме без консоли (noconsole/pythonw) sys.stdout/stderr могут быть None или закрыты,
-        # что вызывает ошибки в логгере uvicorn (isatty).
-        # Перенаправляем стандартные потоки в никуда, если они None.
-        if sys.stdout is None:
-            sys.stdout = open(os.devnull, 'w')
-        if sys.stderr is None:
-            sys.stderr = open(os.devnull, 'w')
+    # Перенаправление stdout/stderr в логгер для отлова print и ошибок
+    sys.stdout = LoggerWriter(logger.info)
+    sys.stderr = LoggerWriter(logger.error)
 
-        # Отключаем цвета и интерактивность, которые требуют TTY
-        if "formatters" in log_config:
-            if "default" in log_config["formatters"]:
-                log_config["formatters"]["default"]["use_colors"] = False
-            if "access" in log_config["formatters"]:
-                log_config["formatters"]["access"]["use_colors"] = False
+    # Настройка логов для uvicorn
+    log_config = uvicorn.config.LOGGING_CONFIG.copy()
     
+    # Отключаем цвета, так как они плохо пишутся в файл
+    if "formatters" in log_config:
+        if "default" in log_config["formatters"]:
+            log_config["formatters"]["default"]["use_colors"] = False
+        if "access" in log_config["formatters"]:
+            log_config["formatters"]["access"]["use_colors"] = False
+    
+    # Добавляем наш FileHandler в конфиг uvicorn
+    log_config["handlers"]["file"] = {
+        "class": "logging.FileHandler",
+        "filename": db.LOG_PATH,
+        "encoding": "utf-8",
+        "formatter": "default",
+    }
+    log_config["loggers"]["uvicorn"]["handlers"].append("file")
+    log_config["loggers"]["uvicorn.error"]["handlers"].append("file")
+    log_config["loggers"]["uvicorn.access"]["handlers"].append("file")
+
     # Конфигурация Uvicorn
     config = uvicorn.Config(
         app, 
@@ -66,11 +94,10 @@ async def main():
     loop = asyncio.get_running_loop()
     
     def signal_handler():
-        print("\nShutdown signal received...")
+        logger.info("Shutdown signal received...")
         stop_event.set()
 
-    # В Windows signal.SIGINT работает специфично, но для asyncio loop.add_signal_handler не поддерживается для SIGINT
-    # Мы будем использовать проверку stop_event
+    # В Windows signal.SIGINT работает специфично
     
     async def run_server():
         await server.serve()
@@ -82,15 +109,15 @@ async def main():
     await stop_event.wait()
     
     # Graceful shutdown
-    print("Stopping tracker...")
+    logger.info("Stopping tracker...")
     await tracker.stop()
     tracker_task.cancel()
     
-    print("Stopping server...")
+    logger.info("Stopping server...")
     server.should_exit = True
     await server_task
     
-    print("Done.")
+    logger.info("Done.")
 
 if __name__ == "__main__":
     try:

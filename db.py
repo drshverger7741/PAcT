@@ -46,9 +46,9 @@ async def init_db():
             )
         """)
         # Начальные настройки, если их нет
-        await db.execute("INSERT OR IGNORE INTO settings (key, value) VALUES ('idle_threshold', '60')")
-        await db.execute("INSERT OR IGNORE INTO settings (key, value) VALUES ('check_interval', '5')")
-        await db.execute("INSERT OR IGNORE INTO settings (key, value) VALUES ('flush_interval', '30')")
+        await db.execute("INSERT OR IGNORE INTO settings (key, value) VALUES ('idle_threshold', '300')")
+        await db.execute("INSERT OR IGNORE INTO settings (key, value) VALUES ('check_interval', '10')")
+        await db.execute("INSERT OR IGNORE INTO settings (key, value) VALUES ('flush_interval', '60')")
         await db.execute("INSERT OR IGNORE INTO settings (key, value) VALUES ('visible_columns', 'active_seconds,idle_seconds,locked_seconds,no_session_seconds,sleep_seconds,shutdown_seconds,unknown_seconds')")
         
         # Миграции

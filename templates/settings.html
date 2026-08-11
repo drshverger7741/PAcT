@@ -79,10 +79,15 @@
                     </div>
                 </fieldset>
                 
-                <div style="text-align: right;">
+                <div style="display: flex; justify-content: flex-end; gap: 10px;">
+                    <button type="button" class="outline" style="width: auto; padding: 10px 20px;" 
+                            onclick="if(confirm('Сбросить все настройки к значениям по умолчанию?')) { document.getElementById('reset-form').submit(); }">
+                        Сбросить по умолчанию
+                    </button>
                     <button type="submit" style="width: auto; padding: 10px 40px;">Сохранить изменения</button>
                 </div>
             </form>
+            <form id="reset-form" action="/api/settings/reset" method="post" style="display: none;"></form>
         </section>
 
         <hr style="margin: 3rem 0;">

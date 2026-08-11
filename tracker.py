@@ -51,9 +51,9 @@ class ActivityTracker:
     def __init__(self, db_module):
         self.db = db_module
         self.current_state = "unknown"
-        self.idle_threshold = 60.0
-        self.check_interval = 5.0
-        self.flush_interval = 30.0
+        self.idle_threshold = 300.0
+        self.check_interval = 10.0
+        self.flush_interval = 60.0
         self.stats = {
             "active": 0.0,
             "idle": 0.0,
@@ -145,9 +145,9 @@ class ActivityTracker:
         self.last_state_change_time = time.time()
         
         # Загрузка настроек
-        self.idle_threshold = float(await self.db.get_setting("idle_threshold", "60"))
-        self.check_interval = float(await self.db.get_setting("check_interval", "5"))
-        self.flush_interval = float(await self.db.get_setting("flush_interval", "30"))
+        self.idle_threshold = float(await self.db.get_setting("idle_threshold", "300"))
+        self.check_interval = float(await self.db.get_setting("check_interval", "10"))
+        self.flush_interval = float(await self.db.get_setting("flush_interval", "60"))
 
         # Начальное состояние: проверяем активность сразу
         idle_time = self.get_idle_time()

@@ -213,6 +213,25 @@ async def save_settings(
             pass
     return RedirectResponse(url="/", status_code=303)
 
+@app.post("/api/settings/reset")
+async def reset_settings():
+    default_idle = "300"
+    default_check = "10"
+    default_flush = "60"
+    default_columns = "active_seconds,idle_seconds,locked_seconds,no_session_seconds,sleep_seconds,shutdown_seconds,unknown_seconds"
+    
+    await db.set_setting("idle_threshold", default_idle)
+    await db.set_setting("check_interval", default_check)
+    await db.set_setting("flush_interval", default_flush)
+    await db.set_setting("visible_columns", default_columns)
+    
+    if tracker:
+        tracker.idle_threshold = float(default_idle)
+        tracker.check_interval = float(default_check)
+        tracker.flush_interval = float(default_flush)
+        
+    return RedirectResponse(url="/settings", status_code=303)
+
 @app.get("/api/day_details/{day_date}", response_class=HTMLResponse)
 async def get_day_details(request: Request, day_date: str):
     log = await db.get_activity_log(day_date)

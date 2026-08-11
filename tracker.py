@@ -65,6 +65,7 @@ class ActivityTracker:
         }
         self.last_flush_time = time.time()
         self.last_tick_time = time.time()
+        self.last_state_change_time = time.time()
         self.event_queue = asyncio.Queue()
         self.running = False
         self._lock = threading.Lock()
@@ -111,6 +112,24 @@ class ActivityTracker:
             user32.TranslateMessage(ctypes.byref(msg))
             user32.DispatchMessageW(ctypes.byref(msg))
 
+    async def log_interval(self, state, start_time, end_time):
+        """Логирует интервал в БД."""
+        d = datetime.fromtimestamp(start_time).date().isoformat()
+        st = datetime.fromtimestamp(start_time).strftime("%H:%M:%S")
+        et = datetime.fromtimestamp(end_time).strftime("%H:%M:%S")
+        await self.db.add_activity_interval(d, st, et, state)
+
+    async def change_state(self, new_state):
+        """Меняет состояние и логирует интервал."""
+        if new_state == self.current_state:
+            return
+        
+        now = time.time()
+        await self.log_interval(self.current_state, self.last_state_change_time, now)
+        await self.flush_to_db()
+        self.current_state = new_state
+        self.last_state_change_time = now
+
     async def flush_to_db(self):
         with self._lock:
             to_flush = self.stats.copy()
@@ -123,11 +142,19 @@ class ActivityTracker:
     async def run(self):
         self.running = True
         self.last_tick_time = time.time()
+        self.last_state_change_time = time.time()
         
         # Загрузка настроек
         self.idle_threshold = float(await self.db.get_setting("idle_threshold", "60"))
         self.check_interval = float(await self.db.get_setting("check_interval", "5"))
         self.flush_interval = float(await self.db.get_setting("flush_interval", "30"))
+
+        # Начальное состояние: проверяем активность сразу
+        idle_time = self.get_idle_time()
+        if idle_time >= self.idle_threshold:
+            self.current_state = "idle"
+        else:
+            self.current_state = "active"
 
         # Запуск потока для WinAPI сообщений
         threading.Thread(target=self._create_message_window, daemon=True).start()
@@ -151,11 +178,9 @@ class ActivityTracker:
                 try:
                     event = await asyncio.wait_for(self.event_queue.get(), timeout=self.check_interval)
                     if event[0] == "state_change":
-                        await self.flush_to_db()
-                        self.current_state = event[1]
+                        await self.change_state(event[1])
                     elif event[0] == "sleep_start":
-                        await self.flush_to_db()
-                        self.current_state = "sleep"
+                        await self.change_state("sleep")
                         sleep_start_time = event[1]
                     elif event[0] == "sleep_end":
                         if sleep_start_time:
@@ -163,8 +188,7 @@ class ActivityTracker:
                             with self._lock:
                                 self.stats["sleep"] += delta
                             sleep_start_time = None
-                        self.current_state = "active"
-                        await self.flush_to_db()
+                        await self.change_state("active")
                 except asyncio.TimeoutError:
                     pass
 
@@ -182,9 +206,9 @@ class ActivityTracker:
                 if self.current_state not in ["locked", "no_session", "sleep"]:
                     idle_time = self.get_idle_time()
                     if idle_time >= self.idle_threshold:
-                        self.current_state = "idle"
+                        await self.change_state("idle")
                     else:
-                        self.current_state = "active"
+                        await self.change_state("active")
                 
                 with self._lock:
                     self.stats[self.current_state] += delta
@@ -199,4 +223,6 @@ class ActivityTracker:
 
     async def stop(self):
         self.running = False
+        now = time.time()
+        await self.log_interval(self.current_state, self.last_state_change_time, now)
         await self.flush_to_db()

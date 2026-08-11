@@ -1,0 +1,44 @@
+<div style="padding-left: 20px;">
+    {% if current_interval %}
+    <div style="margin-bottom: 20px; padding: 10px; border: 2px solid var(--primary); border-radius: 8px; background: #1a1d23;">
+        <h6 style="margin-bottom: 5px; color: var(--primary);">Текущая активность</h6>
+        <table role="grid" style="margin-bottom: 0;">
+            <tbody>
+                <tr>
+                    <td>{{ current_interval.start_time }} - Сейчас</td>
+                    <td class="state-{{ current_interval.state }}">{{ current_interval.state_ru }}</td>
+                    <td>(Идет сбор информации...)</td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+    {% endif %}
+
+    <table role="grid">
+        <thead>
+            <tr>
+                <th>Время</th>
+                <th>Состояние</th>
+                <th>Комментарий</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for entry in log %}
+            <tr>
+                <td>{{ entry.start_time }} - {{ entry.end_time }}</td>
+                <td class="{{ entry.state_class }}">{{ entry.state_ru }}</td>
+                <td>
+                    <div id="comment-int-{{ entry.id }}" 
+                         class="comment-text"
+                         onclick="openModal('Комментарий к интервалу', '{{ entry.start_time }} - {{ entry.end_time }} ({{ entry.state_ru }})', '/api/interval_comment/{{ entry.id }}', 'comment-int-{{ entry.id }}', this.textContent.trim())">{{ entry.comment or '' }}</div>
+                </td>
+            </tr>
+            {% endfor %}
+            {% if not log and not current_interval %}
+            <tr>
+                <td colspan="3">Интервалы не записаны</td>
+            </tr>
+            {% endif %}
+        </tbody>
+    </table>
+</div>

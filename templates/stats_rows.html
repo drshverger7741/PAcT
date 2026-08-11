@@ -1,12 +1,66 @@
-{% for row in stats %}
-<tr>
-    <td>{{ row.date }}</td>
-    <td>{{ row.active_seconds | hours }}</td>
-    <td>{{ row.idle_seconds | hours }}</td>
-    <td>{{ row.locked_seconds | hours }}</td>
-    <td>{{ row.no_session_seconds | hours }}</td>
-    <td>{{ row.sleep_seconds | hours }}</td>
-    <td>{{ row.shutdown_seconds | hours }}</td>
-    <td>{{ row.unknown_seconds | hours }}</td>
-</tr>
+{% for month_data in grouped_stats %}
+<details {% if month_data.is_current %}open{% endif %}>
+    <summary style="display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: nowrap; overflow: hidden;">
+        <strong style="flex: 0 0 150px; white-space: nowrap;">{{ month_data.month | month_name }} {{ month_data.year }}</strong>
+        <div style="flex: 1; display: flex; gap: 8px; font-size: 0.8em; color: #ccc; overflow: hidden; justify-content: flex-end;">
+            {% if 'active_seconds' in visible_columns %}<span title="Активен" style="white-space: nowrap;">Акт: {{ month_data.total.active_seconds | hours }}ч</span>{% endif %}
+            {% if 'idle_seconds' in visible_columns %}<span title="Простой" style="white-space: nowrap;">Прст: {{ month_data.total.idle_seconds | hours }}ч</span>{% endif %}
+            {% if 'locked_seconds' in visible_columns %}<span title="Заблокирован" style="white-space: nowrap;">Блок: {{ month_data.total.locked_seconds | hours }}ч</span>{% endif %}
+            {% if 'no_session_seconds' in visible_columns %}<span title="Нет сеанса" style="white-space: nowrap;">Нет сес: {{ month_data.total.no_session_seconds | hours }}ч</span>{% endif %}
+            {% if 'sleep_seconds' in visible_columns %}<span title="Сон" style="white-space: nowrap;">Сон: {{ month_data.total.sleep_seconds | hours }}ч</span>{% endif %}
+            {% if 'shutdown_seconds' in visible_columns %}<span title="Выключен" style="white-space: nowrap;">Выкл: {{ month_data.total.shutdown_seconds | hours }}ч</span>{% endif %}
+            {% if 'unknown_seconds' in visible_columns %}<span title="Неизвестно" style="white-space: nowrap;">Неизв: {{ month_data.total.unknown_seconds | hours }}ч</span>{% endif %}
+        </div>
+        <div style="flex: 0 0 120px;"></div>
+    </summary>
+    
+    {% for week in month_data.weeks %}
+    <details {% if month_data.is_current %}open{% endif %}>
+        <summary class="week-summary" style="display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: nowrap; overflow: hidden;">
+            <strong style="flex: 0 0 150px; white-space: nowrap;">Неделя {{ week.number }}</strong>
+            <div style="flex: 1; display: flex; gap: 8px; font-size: 0.8em; color: #ccc; overflow: hidden; justify-content: flex-end;">
+                {% if 'active_seconds' in visible_columns %}<span title="Активен" style="white-space: nowrap;"> Акт: {{ week.total.active_seconds | hours }}ч</span>{% endif %}
+                {% if 'idle_seconds' in visible_columns %}<span title="Простой" style="white-space: nowrap;"> Прст: {{ week.total.idle_seconds | hours }}ч</span>{% endif %}
+                {% if 'locked_seconds' in visible_columns %}<span title="Заблокирован" style="white-space: nowrap;"> Блок: {{ week.total.locked_seconds | hours }}ч</span>{% endif %}
+                {% if 'no_session_seconds' in visible_columns %}<span title="Нет сеанса" style="white-space: nowrap;"> Нет сес: {{ week.total.no_session_seconds | hours }}ч</span>{% endif %}
+                {% if 'sleep_seconds' in visible_columns %}<span title="Сон" style="white-space: nowrap;"> Сон: {{ week.total.sleep_seconds | hours }}ч</span>{% endif %}
+                {% if 'shutdown_seconds' in visible_columns %}<span title="Выключен" style="white-space: nowrap;"> Выкл: {{ week.total.shutdown_seconds | hours }}ч</span>{% endif %}
+                {% if 'unknown_seconds' in visible_columns %}<span title="Неизвестно" style="white-space: nowrap;"> Неизв: {{ week.total.unknown_seconds | hours }}ч</span>{% endif %}
+            </div>
+            <div style="flex: 0 0 120px;"></div>
+        </summary>
+        
+        {% for day in week.days %}
+        <div class="day-row">
+            <details {% if day.is_today %}open{% endif %}>
+                <summary class="day-summary">
+                    <div style="display: flex; justify-content: space-between; width: 100%; align-items: center; gap: 10px; flex-wrap: nowrap; overflow: hidden;">
+                        <div style="flex: 0 0 150px; white-space: nowrap;">
+                            <strong>{{ day.date | date_custom }}</strong>
+                        </div>
+                        <div style="flex: 1; display: flex; gap: 8px; font-size: 0.8em; color: #ccc; overflow: hidden; justify-content: flex-end;" onclick="event.stopPropagation();">
+                            {% if 'active_seconds' in visible_columns %}<span title="Активен" style="white-space: nowrap;">Акт: {{ day.active_seconds | hours }}</span>{% endif %}
+                            {% if 'idle_seconds' in visible_columns %}<span title="Простой" style="white-space: nowrap;">Прст: {{ day.idle_seconds | hours }}</span>{% endif %}
+                            {% if 'locked_seconds' in visible_columns %}<span title="Заблокирован" style="white-space: nowrap;">Блок: {{ day.locked_seconds | hours }}</span>{% endif %}
+                            {% if 'no_session_seconds' in visible_columns %}<span title="Нет сеанса" style="white-space: nowrap;">Нет сес: {{ day.no_session_seconds | hours }}</span>{% endif %}
+                            {% if 'sleep_seconds' in visible_columns %}<span title="Сон" style="white-space: nowrap;">Сон: {{ day.sleep_seconds | hours }}</span>{% endif %}
+                            {% if 'shutdown_seconds' in visible_columns %}<span title="Выключен" style="white-space: nowrap;">Выкл: {{ day.shutdown_seconds | hours }}</span>{% endif %}
+                            {% if 'unknown_seconds' in visible_columns %}<span title="Неизвестно" style="white-space: nowrap;">Неизв: {{ day.unknown_seconds | hours }}</span>{% endif %}
+                        </div>
+                        <div style="flex: 0 0 120px;">
+                            <div id="comment-day-{{ day.date }}" 
+                                 class="comment-text"
+                                 onclick="event.stopPropagation(); openModal('Комментарий к дню', '{{ day.date | date_custom }}', '/api/day_comment/{{ day.date }}', 'comment-day-{{ day.date }}', this.textContent.trim())">{{ day.comment or '' }}</div>
+                        </div>
+                    </div>
+                </summary>
+                <div hx-get="/api/day_details/{{ day.date }}" hx-trigger="intersect once">
+                    Загрузка подробностей...
+                </div>
+            </details>
+        </div>
+        {% endfor %}
+    </details>
+    {% endfor %}
+</details>
 {% endfor %}

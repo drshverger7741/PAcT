@@ -39,13 +39,13 @@
                             <strong>{{ day.date | date_custom }}</strong>
                         </div>
                         <div style="flex: 1; display: flex; gap: 8px; font-size: 0.8em; color: #ccc; overflow: hidden; justify-content: flex-end;" onclick="event.stopPropagation();">
-                            {% if 'active_seconds' in visible_columns %}<span title="Активен" style="white-space: nowrap;">Акт: {{ day.active_seconds | hours }}</span>{% endif %}
-                            {% if 'idle_seconds' in visible_columns %}<span title="Простой" style="white-space: nowrap;">Прст: {{ day.idle_seconds | hours }}</span>{% endif %}
-                            {% if 'locked_seconds' in visible_columns %}<span title="Заблокирован" style="white-space: nowrap;">Блок: {{ day.locked_seconds | hours }}</span>{% endif %}
-                            {% if 'no_session_seconds' in visible_columns %}<span title="Нет сеанса" style="white-space: nowrap;">Нет сес: {{ day.no_session_seconds | hours }}</span>{% endif %}
-                            {% if 'sleep_seconds' in visible_columns %}<span title="Сон" style="white-space: nowrap;">Сон: {{ day.sleep_seconds | hours }}</span>{% endif %}
-                            {% if 'shutdown_seconds' in visible_columns %}<span title="Выключен" style="white-space: nowrap;">Выкл: {{ day.shutdown_seconds | hours }}</span>{% endif %}
-                            {% if 'unknown_seconds' in visible_columns %}<span title="Неизвестно" style="white-space: nowrap;">Неизв: {{ day.unknown_seconds | hours }}</span>{% endif %}
+                            {% if 'active_seconds' in visible_columns %}<span title="Активен" style="white-space: nowrap;">Акт: {{ day.active_seconds | hours }}ч</span>{% endif %}
+                            {% if 'idle_seconds' in visible_columns %}<span title="Простой" style="white-space: nowrap;">Прст: {{ day.idle_seconds | hours }}ч</span>{% endif %}
+                            {% if 'locked_seconds' in visible_columns %}<span title="Заблокирован" style="white-space: nowrap;">Блок: {{ day.locked_seconds | hours }}ч</span>{% endif %}
+                            {% if 'no_session_seconds' in visible_columns %}<span title="Нет сеанса" style="white-space: nowrap;">Нет сес: {{ day.no_session_seconds | hours }}ч</span>{% endif %}
+                            {% if 'sleep_seconds' in visible_columns %}<span title="Сон" style="white-space: nowrap;">Сон: {{ day.sleep_seconds | hours }}ч</span>{% endif %}
+                            {% if 'shutdown_seconds' in visible_columns %}<span title="Выключен" style="white-space: nowrap;">Выкл: {{ day.shutdown_seconds | hours }}ч</span>{% endif %}
+                            {% if 'unknown_seconds' in visible_columns %}<span title="Неизвестно" style="white-space: nowrap;">Неизв: {{ day.unknown_seconds | hours }}ч</span>{% endif %}
                         </div>
                         <div style="flex: 0 0 120px;">
                             <div id="comment-day-{{ day.date }}" 

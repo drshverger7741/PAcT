@@ -73,9 +73,14 @@ async def main():
         "encoding": "utf-8",
         "formatter": "default",
     }
-    log_config["loggers"]["uvicorn"]["handlers"].append("file")
-    log_config["loggers"]["uvicorn.error"]["handlers"].append("file")
-    log_config["loggers"]["uvicorn.access"]["handlers"].append("file")
+    
+    # Безопасно добавляем обработчик в логгеры
+    for logger_name in ["uvicorn", "uvicorn.error", "uvicorn.access"]:
+        if logger_name not in log_config["loggers"]:
+            log_config["loggers"][logger_name] = {"handlers": []}
+        if "handlers" not in log_config["loggers"][logger_name]:
+            log_config["loggers"][logger_name]["handlers"] = []
+        log_config["loggers"][logger_name]["handlers"].append("file")
 
     # Конфигурация Uvicorn
     config = uvicorn.Config(

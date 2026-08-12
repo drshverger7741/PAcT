@@ -1,13 +1,13 @@
 <div style="padding-left: 20px;">
     {% if current_interval %}
     <div style="margin-bottom: 20px; padding: 10px; border: 2px solid var(--primary); border-radius: 8px; background: #1a1d23;">
-        <h6 style="margin-bottom: 5px; color: var(--primary);">Текущая активность</h6>
+        <h6 style="margin-bottom: 5px; color: var(--primary);">{{ i18n.current_activity }}</h6>
         <table role="grid" style="margin-bottom: 0;">
             <tbody>
                 <tr>
-                    <td>{{ current_interval.start_time }} - Сейчас</td>
+                    <td>{{ current_interval.start_time }} - {{ i18n.now }}</td>
                     <td class="state-{{ current_interval.state }}">{{ current_interval.state_ru }}</td>
-                    <td>(Идет сбор информации...)</td>
+                    <td>({{ i18n.collecting_data }})</td>
                 </tr>
             </tbody>
         </table>
@@ -17,9 +17,9 @@
     <table role="grid">
         <thead>
             <tr>
-                <th>Время</th>
-                <th>Состояние</th>
-                <th>Комментарий</th>
+                <th>{{ i18n.time }}</th>
+                <th>{{ i18n.state }}</th>
+                <th>{{ i18n.comment }}</th>
             </tr>
         </thead>
         <tbody>
@@ -30,13 +30,13 @@
                 <td>
                     <div id="comment-int-{{ entry.id }}" 
                          class="comment-text"
-                         onclick="openModal('Комментарий к интервалу', '{{ entry.start_time }} - {{ entry.end_time }} ({{ entry.state_ru }})', '/api/interval_comment/{{ entry.id }}', 'comment-int-{{ entry.id }}', this.textContent.trim())">{{ entry.comment or '' }}</div>
+                         onclick="openModal('{{ i18n.interval_comment_title }}', '{{ entry.start_time }} - {{ entry.end_time }} ({{ entry.state_ru }})', '/api/interval_comment/{{ entry.id }}', 'comment-int-{{ entry.id }}', this.textContent.trim())">{{ entry.comment or '' }}</div>
                 </td>
             </tr>
             {% endfor %}
             {% if not log and not current_interval %}
             <tr>
-                <td colspan="3">Интервалы не записаны</td>
+                <td colspan="3">{{ i18n.no_intervals }}</td>
             </tr>
             {% endif %}
         </tbody>

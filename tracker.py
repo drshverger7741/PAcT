@@ -47,6 +47,25 @@ wtsapi32 = ctypes.windll.wtsapi32
 user32.DefWindowProcW.argtypes = [ctypes.wintypes.HWND, ctypes.wintypes.UINT, ctypes.wintypes.WPARAM, ctypes.wintypes.LPARAM]
 user32.DefWindowProcW.restype = ctypes.c_longlong
 
+user32.RegisterClassW.argtypes = [ctypes.POINTER(WNDCLASSW)]
+user32.RegisterClassW.restype = ctypes.wintypes.ATOM
+
+user32.CreateWindowExW.argtypes = [
+    ctypes.wintypes.DWORD,
+    ctypes.wintypes.LPCWSTR,
+    ctypes.wintypes.LPCWSTR,
+    ctypes.wintypes.DWORD,
+    ctypes.c_int,
+    ctypes.c_int,
+    ctypes.c_int,
+    ctypes.c_int,
+    ctypes.wintypes.HWND,
+    ctypes.wintypes.HMENU,
+    ctypes.wintypes.HINSTANCE,
+    ctypes.wintypes.LPVOID
+]
+user32.CreateWindowExW.restype = ctypes.wintypes.HWND
+
 class ActivityTracker:
     def __init__(self, db_module):
         self.db = db_module
@@ -104,7 +123,7 @@ class ActivityTracker:
         wc.hInstance = kernel32.GetModuleHandleW(None)
         
         user32.RegisterClassW(ctypes.byref(wc))
-        hwnd = user32.CreateWindowExW(0, wc.lpszClassName, "Tracker", 0, 0, 0, 0, 0, 0, 0, wc.hInstance, 0)
+        hwnd = user32.CreateWindowExW(0, wc.lpszClassName, "Tracker", 0, 0, 0, 0, 0, 0, None, wc.hInstance, None)
         
         wtsapi32.WTSRegisterSessionNotification(hwnd, NOTIFY_FOR_THIS_SESSION)
         

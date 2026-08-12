@@ -7,6 +7,7 @@ from fastapi.staticfiles import StaticFiles
 import locale
 from datetime import date, datetime, timedelta
 from typing import Optional, List, Dict, Any
+from translations import TRANSLATIONS
 
 # Попытка установить русскую локаль для дат
 try:
@@ -36,12 +37,16 @@ templates = Jinja2Templates(directory=get_templates_path())
 tracker = None
 db = None
 stop_event = None
+current_lang = "ru"
 
 def init_web(tracker_instance, db_module, stop_event_instance=None):
     global tracker, db, stop_event
     tracker = tracker_instance
     db = db_module
     stop_event = stop_event_instance
+
+def get_i18n():
+    return TRANSLATIONS.get(current_lang, TRANSLATIONS["ru"])
 
 def format_hours(seconds: float) -> str:
     if seconds is None: return "0.00"
@@ -51,18 +56,16 @@ def format_date_custom(date_str: str) -> str:
     """вт. 11 августа 2026"""
     try:
         dt = date.fromisoformat(date_str)
-        # Названия месяцев в родительном падеже для русского
-        months = ["января", "февраля", "марта", "апреля", "мая", "июня", 
-                  "июля", "августа", "сентября", "октября", "ноября", "декабря"]
-        weekdays = ["пн.", "вт.", "ср.", "чт.", "пт.", "сб.", "вс."]
+        i18n = get_i18n()
+        months = i18n["months"]
+        weekdays = i18n["weekdays"]
         return f"{weekdays[dt.weekday()]} {dt.day} {months[dt.month-1]} {dt.year}"
     except Exception:
         return date_str
 
 def get_month_name(month_idx: int) -> str:
-    months = ["Январь", "Февраль", "Март", "Апрель", "Май", "Июнь", 
-              "Июль", "Август", "Сентябрь", "Октябрь", "Ноябрь", "Декабрь"]
-    return months[month_idx-1]
+    i18n = get_i18n()
+    return i18n["months_full"][month_idx-1]
 
 templates.env.filters["hours"] = format_hours
 templates.env.filters["date_custom"] = format_date_custom
@@ -147,6 +150,9 @@ async def group_stats(stats: List[Dict]):
 
 @app.get("/", response_class=HTMLResponse)
 async def index(request: Request):
+    global current_lang
+    current_lang = await db.get_setting("language", "ru")
+    i18n = get_i18n()
     stats = await db.get_all_stats()
     grouped = await group_stats(stats)
     idle_threshold = await db.get_setting("idle_threshold", "60")
@@ -158,25 +164,29 @@ async def index(request: Request):
             "grouped_stats": grouped,
             "current_state": tracker.current_state if tracker else "unknown",
             "idle_threshold": idle_threshold,
-            "visible_columns": visible_columns
+            "visible_columns": visible_columns,
+            "i18n": i18n
         }
     )
 
 @app.get("/settings", response_class=HTMLResponse)
 async def settings_page(request: Request):
+    global current_lang
+    current_lang = await db.get_setting("language", "ru")
+    i18n = get_i18n()
     idle_threshold = await db.get_setting("idle_threshold", "60")
     check_interval = await db.get_setting("check_interval", "5")
     flush_interval = await db.get_setting("flush_interval", "30")
     visible_columns = (await db.get_setting("visible_columns", "active_seconds,idle_seconds")).split(",")
     
     all_columns = [
-        ("active_seconds", "Активен"),
-        ("idle_seconds", "Простой"),
-        ("locked_seconds", "Заблокирован"),
-        ("no_session_seconds", "Нет сеанса"),
-        ("sleep_seconds", "Сон"),
-        ("shutdown_seconds", "Выключен"),
-        ("unknown_seconds", "Неизвестно")
+        ("active_seconds", i18n["active"]),
+        ("idle_seconds", i18n["idle"]),
+        ("locked_seconds", i18n["locked"]),
+        ("no_session_seconds", i18n["no_session"]),
+        ("sleep_seconds", i18n["sleep"]),
+        ("shutdown_seconds", i18n["shutdown"]),
+        ("unknown_seconds", i18n["unknown"])
     ]
     
     return templates.TemplateResponse(
@@ -187,7 +197,9 @@ async def settings_page(request: Request):
             "check_interval": check_interval,
             "flush_interval": flush_interval,
             "visible_columns": visible_columns,
-            "all_columns": all_columns
+            "all_columns": all_columns,
+            "language": current_lang,
+            "i18n": i18n
         }
     )
 
@@ -197,12 +209,17 @@ async def save_settings(
     idle_threshold: str = Form(...),
     check_interval: str = Form(...),
     flush_interval: str = Form(...),
+    language: str = Form("ru"),
     visible_columns: List[str] = Form([])
 ):
     await db.set_setting("idle_threshold", idle_threshold)
     await db.set_setting("check_interval", check_interval)
     await db.set_setting("flush_interval", flush_interval)
+    await db.set_setting("language", language)
     await db.set_setting("visible_columns", ",".join(visible_columns))
+    
+    global current_lang
+    current_lang = language
     
     if tracker:
         try:
@@ -218,12 +235,17 @@ async def reset_settings():
     default_idle = "300"
     default_check = "10"
     default_flush = "60"
+    default_lang = "ru"
     default_columns = "active_seconds,idle_seconds,locked_seconds,no_session_seconds,sleep_seconds,shutdown_seconds,unknown_seconds"
     
     await db.set_setting("idle_threshold", default_idle)
     await db.set_setting("check_interval", default_check)
     await db.set_setting("flush_interval", default_flush)
+    await db.set_setting("language", default_lang)
     await db.set_setting("visible_columns", default_columns)
+    
+    global current_lang
+    current_lang = default_lang
     
     if tracker:
         tracker.idle_threshold = float(default_idle)
@@ -234,15 +256,18 @@ async def reset_settings():
 
 @app.get("/api/day_details/{day_date}", response_class=HTMLResponse)
 async def get_day_details(request: Request, day_date: str):
+    global current_lang
+    current_lang = await db.get_setting("language", "ru")
+    i18n = get_i18n()
     log = await db.get_activity_log(day_date)
-    # Переводим состояния на русский
+    # Переводим состояния
     state_map = {
-        "active": "Активен",
-        "idle": "Простой",
-        "locked": "Заблокирован",
-        "no_session": "Нет сеанса",
-        "sleep": "Сон",
-        "unknown": "Неизвестно"
+        "active": i18n["active"],
+        "idle": i18n["idle"],
+        "locked": i18n["locked"],
+        "no_session": i18n["no_session"],
+        "sleep": i18n["sleep"],
+        "unknown": i18n["unknown"]
     }
     for item in log:
         item['state_ru'] = state_map.get(item['state'], item['state'])
@@ -259,7 +284,12 @@ async def get_day_details(request: Request, day_date: str):
     return templates.TemplateResponse(
         request=request,
         name="day_details.html",
-        context={"log": log, "day_date": day_date, "current_interval": current_interval}
+        context={
+            "log": log,
+            "day_date": day_date,
+            "current_interval": current_interval,
+            "i18n": i18n
+        }
     )
 
 @app.post("/api/day_comment/{day_date}")
@@ -280,30 +310,41 @@ async def update_interval_comment_endpoint(interval_id: int, comment: str = Form
 
 @app.get("/api/stats", response_class=HTMLResponse)
 async def get_stats(request: Request):
+    global current_lang
+    current_lang = await db.get_setting("language", "ru")
+    i18n = get_i18n()
     stats = await db.get_all_stats()
     grouped = await group_stats(stats)
     visible_columns = (await db.get_setting("visible_columns", "active_seconds,idle_seconds")).split(",")
     return templates.TemplateResponse(
         request=request,
         name="stats_rows.html",
-        context={"grouped_stats": grouped, "visible_columns": visible_columns}
+        context={
+            "grouped_stats": grouped,
+            "visible_columns": visible_columns,
+            "i18n": i18n
+        }
     )
 
 @app.get("/api/state", response_class=HTMLResponse)
 async def get_state(request: Request):
+    global current_lang
+    current_lang = await db.get_setting("language", "ru")
+    i18n = get_i18n()
     state = tracker.current_state if tracker else "unknown"
     color = "green"
     if state == "idle": color = "yellow"
     elif state in ["locked", "no_session", "sleep"]: color = "red"
     
-    text = {
-        "active": "Активен",
-        "idle": "Простой",
-        "locked": "Заблокирован",
-        "no_session": "Нет сеанса",
-        "sleep": "Сон",
-        "unknown": "Неизвестно"
-    }.get(state, state)
+    state_map = {
+        "active": i18n["active"],
+        "idle": i18n["idle"],
+        "locked": i18n["locked"],
+        "no_session": i18n["no_session"],
+        "sleep": i18n["sleep"],
+        "unknown": i18n["unknown"]
+    }
+    text = state_map.get(state, state)
     
     return HTMLResponse(f'<span style="display:inline-block; width:12px; height:12px; border-radius:50%; background-color:{color}; margin-right:8px;"></span>{text}')
 

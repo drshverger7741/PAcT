@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="ru" data-theme="dark">
+<html lang="{{ language or 'ru' }}" data-theme="dark">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>PAcT</title>
+    <title>{{ i18n.title }}</title>
     <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>⏱️</text></svg>">
     <!-- Pico.css Local -->
     <link rel="stylesheet" href="/static/pico.min.css">
@@ -153,7 +153,7 @@
             background: rgba(255, 255, 255, 0.15);
         }
         .comment-text:empty::after, .comment-text:blank::after {
-            content: "📝 Добавить...";
+            content: "📝 {{ i18n.add_dot }}";
             opacity: 0.5;
             font-size: 0.85em;
             font-style: italic;
@@ -164,12 +164,12 @@
     <main class="container">
         <nav>
             <ul>
-                <li><strong>PAcT</strong></li>
+                <li><strong>{{ i18n.title }}</strong></li>
             </ul>
             <ul>
-                <li><a href="/settings" class="secondary">Настройки</a></li>
+                <li><a href="/settings" class="secondary">{{ i18n.settings }}</a></li>
                 <li id="current-state-container" class="state-indicator" hx-get="/api/state" hx-trigger="load, every 5s" hx-swap="innerHTML">
-                    Загрузка состояния...
+                    {{ i18n.loading_details }}
                 </li>
             </ul>
         </nav>
@@ -186,14 +186,14 @@
         <article>
             <header>
                 <a href="#close" aria-label="Close" class="close" onclick="closeModal()"></a>
-                <h3 id="modal-title">Добавить комментарий</h3>
+                <h3 id="modal-title">{{ i18n.comment }}</h3>
             </header>
             <form id="comment-form" hx-post="" hx-target="" hx-on::after-request="closeModal()">
                 <p id="modal-description"></p>
-                <textarea name="comment" id="modal-comment-text" placeholder="Ваш комментарий..."></textarea>
+                <textarea name="comment" id="modal-comment-text" placeholder="{{ i18n.comment }}..."></textarea>
                 <footer>
-                    <button type="button" class="secondary" onclick="closeModal()">Отмена</button>
-                    <button type="submit">Сохранить</button>
+                    <button type="button" class="secondary" onclick="closeModal()">{{ i18n.cancel }}</button>
+                    <button type="submit">{{ i18n.save_changes }}</button>
                 </footer>
             </form>
         </article>

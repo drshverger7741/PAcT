@@ -1,9 +1,8 @@
-<!DOCTYPE html>
-<html lang="ru" data-theme="dark">
+<html lang="{{ i18n.language }}" data-theme="dark">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>PAcT</title>
+    <title>{{ i18n.title }}</title>
     <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>⏱️</text></svg>">
     <link rel="stylesheet" href="/static/pico.min.css">
     <style>
@@ -36,43 +35,60 @@
     <main class="container">
         <nav>
             <ul>
-                <li><strong>PAcT</strong></li>
+                <li><strong>{{ i18n.title }}</strong></li>
             </ul>
             <ul>
-                <li><a href="/">Статистика</a></li>
-                <li><a href="/settings" class="secondary">Настройки</a></li>
+                <li><a href="/">{{ i18n.stats }}</a></li>
+                <li><a href="/settings" class="secondary">{{ i18n.settings }}</a></li>
             </ul>
         </nav>
         <section>
-            <h2 style="border-bottom: 2px solid var(--primary); display: inline-block; padding-right: 20px;">Настройки мониторинга</h2>
+            <h2 style="border-bottom: 2px solid var(--primary); display: inline-block; padding-right: 20px;">{{ i18n.monitoring_settings }}</h2>
             <form action="/settings" method="post">
-                <div class="grid" style="grid-template-columns: repeat(3, 1fr);">
+                <div class="grid" style="grid-template-columns: repeat(4, 1fr);">
                     <label for="idle_threshold">
-                        Порог бездействия (сек)
+                        {{ i18n.idle_threshold }}
                         <input type="number" id="idle_threshold" name="idle_threshold" value="{{ idle_threshold }}" min="5" required>
-                        <small>Режим "Простой" при отсутствии активности</small>
+                        <small>{{ i18n.idle_threshold_desc }}</small>
                     </label>
 
                     <label for="check_interval">
-                        Проверка активности (сек)
+                        {{ i18n.check_interval }}
                         <input type="number" id="check_interval" name="check_interval" value="{{ check_interval }}" min="1" required>
-                        <small>Частота опроса системы</small>
+                        <small>{{ i18n.check_interval_desc }}</small>
                     </label>
 
                     <label for="flush_interval">
-                        Запись в БД (сек)
+                        {{ i18n.flush_interval }}
                         <input type="number" id="flush_interval" name="flush_interval" value="{{ flush_interval }}" min="5" required>
-                        <small>Частота сохранения на диск</small>
+                        <small>{{ i18n.flush_interval_desc }}</small>
+                    </label>
+
+                    <label for="language">
+                        {{ i18n.language }}
+                        <select id="language" name="language">
+                            {% if language == 'ru' %}
+                            <option value="ru" selected>Русский</option>
+                            <option value="en">Английский</option>
+                            {% else %}
+                            <option value="ru">Russian</option>
+                            <option value="en" selected>English</option>
+                            {% endif %}
+                        </select>
+                        <small>{{ i18n.language }}</small>
                     </label>
                 </div>
 
                 <fieldset style="background: rgba(255, 255, 255, 0.03); padding: 15px; border-radius: 8px; border: 1px solid rgba(255, 255, 255, 0.1); margin-bottom: 2rem;">
-                    <legend style="font-weight: bold; color: var(--primary); padding: 0 10px; font-size: 0.9em;">Отображаемые столбцы в статистике</legend>
+                    <legend style="font-weight: bold; color: var(--primary); padding: 0 10px; font-size: 0.9em;">{{ i18n.visible_columns }}</legend>
                     <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 5px; font-size: 0.85em;">
                         {% for col_id, col_name in all_columns %}
                         <label style="margin-bottom: 0; display: flex; align-items: center; gap: 10px; cursor: pointer;">
-                            <input type="checkbox" name="visible_columns" value="{{ col_id }}" 
-                                   {% if col_id in visible_columns %}checked{% endif %} style="margin-bottom: 0;">
+                            {% if col_id in visible_columns %}
+                            <input type="checkbox" name="visible_columns" value="{{ col_id }}" checked style="margin-bottom: 0;">
+                            {% else %}
+                            <input type="checkbox" name="visible_columns" value="{{ col_id }}" style="margin-bottom: 0;">
+                            {% endif %}
                             <span>{{ col_name }}</span>
                         </label>
                         {% endfor %}
@@ -81,10 +97,10 @@
                 
                 <div style="display: flex; justify-content: flex-end; gap: 10px;">
                     <button type="button" class="outline" style="width: auto; padding: 10px 20px;" 
-                            onclick="if(confirm('Сбросить все настройки к значениям по умолчанию?')) { document.getElementById('reset-form').submit(); }">
-                        Сбросить по умолчанию
+                            onclick="if(confirm('{{ i18n.confirm_reset }}')) { document.getElementById('reset-form').submit(); }">
+                        {{ i18n.reset_defaults }}
                     </button>
-                    <button type="submit" style="width: auto; padding: 10px 40px;">Сохранить изменения</button>
+                    <button type="submit" style="width: auto; padding: 10px 40px;">{{ i18n.save_changes }}</button>
                 </div>
             </form>
             <form id="reset-form" action="/api/settings/reset" method="post" style="display: none;"></form>
@@ -93,33 +109,33 @@
         <hr style="margin: 3rem 0;">
 
         <section style="background: rgba(244, 67, 54, 0.05); padding: 15px; border-radius: 8px; border: 1px dashed #f44336;">
-            <h3 style="color: #f44336; margin-bottom: 0.5rem;">Управление сервисом</h3>
-            <p style="font-size: 0.8em; opacity: 0.8;">Внимание: при выключении сервис перестанет собирать статистику и веб-интерфейс станет недоступен.</p>
-            <button id="shutdown-btn" class="outline contrast" style="width: auto; margin-top: 10px; font-size: 0.8em;">Выключить сервис</button>
+            <h3 style="color: #f44336; margin-bottom: 0.5rem;">{{ i18n.service_control }}</h3>
+            <p style="font-size: 0.8em; opacity: 0.8;">{{ i18n.shutdown_warning }}</p>
+            <button id="shutdown-btn" class="outline contrast" style="width: auto; margin-top: 10px; font-size: 0.8em;">{{ i18n.shutdown_service }}</button>
         </section>
 
         <script>
             document.getElementById('shutdown-btn').addEventListener('click', function() {
-                if (confirm('Вы уверены, что хотите полностью выключить сервис мониторинга?')) {
+                if (confirm('{{ i18n.confirm_shutdown }}')) {
                     fetch('/api/shutdown', { method: 'POST' })
                         .then(response => {
                             if (response.ok) {
                                 document.body.innerHTML = `
                                     <main class="container" style="text-align: center; margin-top: 100px;">
-                                        <h1>Сервис выключен</h1>
-                                        <p>Все данные сохранены. Теперь вы можете закрыть эту вкладку.</p>
+                                        <h1>{{ i18n.service_off }}</h1>
+                                        <p>{{ i18n.service_off_desc }}</p>
                                     </main>
                                 `;
                             } else {
-                                alert('Ошибка при попытке выключить сервис.');
+                                alert('{{ i18n.service_off_error }}');
                             }
                         })
                         .catch(error => {
                             // Ошибка ожидаема, так как сервер закрывается
                             document.body.innerHTML = `
                                     <main class="container" style="text-align: center; margin-top: 100px;">
-                                        <h1>Сервис выключен</h1>
-                                        <p>Связь с сервером разорвана. Все данные сохранены.</p>
+                                        <h1>{{ i18n.service_off }}</h1>
+                                        <p>{{ i18n.service_off_lost }}</p>
                                     </main>
                                 `;
                         });

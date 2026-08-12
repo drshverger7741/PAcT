@@ -44,7 +44,7 @@ async def index(request: Request):
     stats = await db.get_all_stats()
     grouped = await utils.group_stats(stats, language)
     idle_threshold = await db.get_setting("idle_threshold", "60")
-    visible_columns = (await db.get_setting("visible_columns", "active_seconds,idle_seconds")).split(",")
+    visible_columns = (await db.get_setting("visible_columns", "active_seconds,idle_seconds,locked_seconds,sleep_seconds")).split(",")
     return templates.TemplateResponse(
         request=request,
         name="index.html",
@@ -70,16 +70,13 @@ async def settings_page(request: Request):
     flush_interval = await db.get_setting("flush_interval", "30")
     custom_title = await db.get_setting("custom_title", "PAcT")
     track_window_activity = (await db.get_setting("track_window_activity", "true")).lower() == "true"
-    visible_columns = (await db.get_setting("visible_columns", "active_seconds,idle_seconds")).split(",")
+    visible_columns = (await db.get_setting("visible_columns", "active_seconds,idle_seconds,locked_seconds,sleep_seconds")).split(",")
     
     all_columns = [
         ("active_seconds", i18n["active"]),
         ("idle_seconds", i18n["idle"]),
         ("locked_seconds", i18n["locked"]),
-        ("no_session_seconds", i18n["no_session"]),
-        ("sleep_seconds", i18n["sleep"]),
-        ("shutdown_seconds", i18n["shutdown"]),
-        ("unknown_seconds", i18n["unknown"])
+        ("sleep_seconds", i18n["sleep"])
     ]
     
     return templates.TemplateResponse(
@@ -140,7 +137,7 @@ async def reset_settings():
     default_lang = "ru"
     default_theme = "dark"
     default_title = "PAcT"
-    default_columns = "active_seconds,idle_seconds"
+    default_columns = "active_seconds,idle_seconds,locked_seconds,sleep_seconds"
     
     await db.set_setting("idle_threshold", default_idle)
     await db.set_setting("check_interval", default_check)
@@ -221,7 +218,7 @@ async def get_stats(request: Request):
     i18n = utils.get_i18n(language)
     stats = await db.get_all_stats()
     grouped = await utils.group_stats(stats, language)
-    visible_columns = (await db.get_setting("visible_columns", "active_seconds,idle_seconds")).split(",")
+    visible_columns = (await db.get_setting("visible_columns", "active_seconds,idle_seconds,locked_seconds,sleep_seconds")).split(",")
     return templates.TemplateResponse(
         request=request,
         name="stats_rows.html",

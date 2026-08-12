@@ -68,4 +68,9 @@
     </details>
     {% endfor %}
 </details>
+{% else %}
+<article style="text-align: center; padding: 3rem 1rem;">
+    <h3>{{ i18n.no_data }}</h3>
+    <p style="color: var(--text-muted);">{{ i18n.no_data_desc }}</p>
+</article>
 {% endfor %}

@@ -2,43 +2,48 @@
     {% if current_interval %}
     <div style="margin-bottom: 20px; padding: 10px; border: 2px solid var(--primary); border-radius: 8px; background: #1a1d23;">
         <h6 style="margin-bottom: 5px; color: var(--primary);">{{ i18n.current_activity }}</h6>
-        <table role="grid" style="margin-bottom: 0;">
+        <table role="grid" style="margin-bottom: 0; table-layout: fixed; width: 100%;">
             <tbody>
                 <tr>
-                    <td>{{ current_interval.start_time }} - {{ i18n.now }}</td>
-                    <td class="state-{{ current_interval.state }}">{{ current_interval.state_ru }}</td>
-                    <td>({{ i18n.collecting_data }})</td>
+                    <td style="width: 30%;">{{ current_interval.start_time }} - {{ i18n.now }}</td>
+                    <td style="width: 30%;" class="state-{{ current_interval.state }}">{{ current_interval.state_ru }}</td>
+                    <td style="width: 40%;">({{ i18n.collecting_data }})</td>
                 </tr>
             </tbody>
         </table>
     </div>
     {% endif %}
 
-    <table role="grid">
+    {% if log %}
+    <table role="grid" style="table-layout: fixed; width: 100%;">
         <thead>
             <tr>
-                <th>{{ i18n.time }}</th>
-                <th>{{ i18n.state }}</th>
-                <th>{{ i18n.comment }}</th>
+                <th style="width: 30%;">{{ i18n.time }}</th>
+                <th style="width: 30%;">{{ i18n.state }}</th>
+                <th style="width: 40%;">{{ i18n.comment }}</th>
             </tr>
         </thead>
         <tbody>
             {% for entry in log %}
             <tr>
-                <td>{{ entry.start_time }} - {{ entry.end_time }}</td>
-                <td class="{{ entry.state_class }}">{{ entry.state_ru }}</td>
-                <td>
+                <td style="width: 30%;">{{ entry.start_time }} - {{ entry.end_time }}</td>
+                <td style="width: 30%;" class="{{ entry.state_class }}">{{ entry.state_ru }}</td>
+                <td style="width: 40%;">
                     <div id="comment-int-{{ entry.id }}" 
                          class="comment-text"
                          onclick="openModal('{{ i18n.interval_comment_title }}', '{{ entry.start_time }} - {{ entry.end_time }} ({{ entry.state_ru }})', '/api/interval_comment/{{ entry.id }}', 'comment-int-{{ entry.id }}', this.textContent.trim())">{{ entry.comment or '' }}</div>
                 </td>
             </tr>
             {% endfor %}
-            {% if not log and not current_interval %}
-            <tr>
-                <td colspan="3">{{ i18n.no_intervals }}</td>
-            </tr>
-            {% endif %}
         </tbody>
     </table>
+    {% elif not current_interval %}
+    <table role="grid" style="table-layout: fixed; width: 100%;">
+        <tbody>
+            <tr>
+                <td>{{ i18n.no_intervals }}</td>
+            </tr>
+        </tbody>
+    </table>
+    {% endif %}
 </div>

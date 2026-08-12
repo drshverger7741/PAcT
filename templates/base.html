@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="{{ language or 'ru' }}" data-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ custom_title or i18n.title }}{% block title %}{% endblock %}</title>
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>⏱️</text></svg>">
+    
+    <!-- Local Styles -->
+    <link rel="stylesheet" href="/static/pico.min.css">
+    <link rel="stylesheet" href="/static/style.css">
+    
+    <!-- Local Scripts -->
+    <script src="/static/htmx.min.js"></script>
+    <script src="/static/js/chart.js"></script>
+    <script src="/static/js/app.js"></script>
+    
+    <style>
+        .comment-text:empty::after, .comment-text:blank::after {
+            content: "📝 {{ i18n.add_dot }}";
+        }
+    </style>
+    
+    {% block extra_head %}{% endblock %}
+</head>
+<body>
+    <main class="container">
+        <nav>
+            <ul>
+                <li><a href="/" style="text-decoration: none; color: inherit;"><strong>{{ i18n.title }}</strong></a></li>
+            </ul>
+            <ul>
+                {% block nav_links %}{% endblock %}
+            </ul>
+        </nav>
+
+        {% block content %}{% endblock %}
+    </main>
+
+    {% block modals %}{% endblock %}
+    
+    {% block extra_scripts %}{% endblock %}
+</body>
+</html>

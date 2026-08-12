@@ -45,6 +45,17 @@ async def init_db():
                 value TEXT
             )
         """)
+        await db.execute("""
+            CREATE TABLE IF NOT EXISTS window_activity (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                date TEXT,
+                window_title TEXT,
+                app_name TEXT,
+                start_time TEXT,
+                end_time TEXT,
+                duration REAL
+            )
+        """)
         # Начальные настройки, если их нет
         await db.execute("INSERT OR IGNORE INTO settings (key, value) VALUES ('idle_threshold', '300')")
         await db.execute("INSERT OR IGNORE INTO settings (key, value) VALUES ('check_interval', '10')")
@@ -172,3 +183,44 @@ async def update_interval_comment(interval_id: int, comment: str):
     async with aiosqlite.connect(DB_PATH) as db:
         await db.execute("UPDATE activity_log SET comment = ? WHERE id = ?", (comment, interval_id))
         await db.commit()
+
+async def add_window_activity(date_str: str, title: str, app: str, start: str, end: str, duration: float):
+    """Добавление записи об активности окна."""
+    async with aiosqlite.connect(DB_PATH) as db:
+        await db.execute(
+            "INSERT INTO window_activity (date, window_title, app_name, start_time, end_time, duration) VALUES (?, ?, ?, ?, ?, ?)",
+            (date_str, title, app, start, end, duration)
+        )
+        await db.commit()
+
+async def get_window_stats(start_date: str, end_date: str = None) -> List[Dict[str, Any]]:
+    """Получение агрегированной статистики по окнам за период."""
+    if end_date is None:
+        end_date = start_date
+    async with aiosqlite.connect(DB_PATH) as db:
+        db.row_factory = aiosqlite.Row
+        query = """
+            SELECT app_name, window_title, SUM(duration) as total_duration
+            FROM window_activity
+            WHERE date BETWEEN ? AND ?
+            GROUP BY app_name, window_title
+            ORDER BY total_duration DESC
+        """
+        async with db.execute(query, (start_date, end_date)) as cursor:
+            rows = await cursor.fetchall()
+            return [dict(row) for row in rows]
+
+async def get_window_timeline(start_date: str, end_date: str = None) -> List[Dict[str, Any]]:
+    """Получение детального лога активности окон за период."""
+    if end_date is None:
+        end_date = start_date
+    async with aiosqlite.connect(DB_PATH) as db:
+        db.row_factory = aiosqlite.Row
+        query = """
+            SELECT * FROM window_activity
+            WHERE date BETWEEN ? AND ?
+            ORDER BY date DESC, start_time DESC
+        """
+        async with db.execute(query, (start_date, end_date)) as cursor:
+            rows = await cursor.fetchall()
+            return [dict(row) for row in rows]

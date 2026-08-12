@@ -1,0 +1,18 @@
+<!-- Modal for Comments -->
+<dialog id="comment-modal">
+    <article style="padding: 30px;">
+        <div class="modal-header-accent" style="margin: -30px -30px 15px -30px;">
+            <h3 id="modal-title">📝 {{ i18n.comment }}</h3>
+            <a href="#close" aria-label="Close" class="close" onclick="closeModal()"></a>
+        </div>
+        <form id="comment-form" hx-post="" hx-target="" hx-on::after-request="closeModal()">
+            <p id="modal-description" style="margin-bottom: 5px;"></p>
+            <textarea name="comment" id="modal-comment-text" placeholder="{{ i18n.comment }}..." style="margin-bottom: 0;"></textarea>
+            <footer style="margin-top: 10px; text-align: right; background: transparent; border-top: none; padding: 0;">
+                <div style="display: flex; justify-content: flex-end; gap: 10px;">
+                    <button type="submit" class="btn-compact" style="background: var(--primary);">{{ i18n.save_changes }}</button>
+                </div>
+            </footer>
+        </form>
+    </article>
+</dialog>

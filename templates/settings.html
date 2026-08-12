@@ -1,8 +1,11 @@
 {% extends "base.html" %}
 
 {% block nav_links %}
-<li><a href="/" class="btn-compact">{{ i18n.stats }}</a></li>
-<li><a href="/settings" class="secondary btn-compact">{{ i18n.settings }}</a></li>
+<li><a href="/" class="secondary btn-compact">{{ i18n.stats }}</a></li>
+<li><a href="/settings" class="btn-compact">{{ i18n.settings }}</a></li>
+<li id="current-state-container" class="state-indicator" hx-get="/api/state" hx-trigger="load, every 5s" hx-swap="innerHTML">
+    {{ i18n.loading_details }}
+</li>
 {% endblock %}
 
 {% block content %}

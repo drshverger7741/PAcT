@@ -1,5 +1,10 @@
+html {
+    font-size: 135%;
+}
 :root {
     --primary: #1095c1;
+    --nav-element-spacing-vertical: 0.5rem;
+    --nav-element-spacing-horizontal: 1rem;
 }
 
 [data-theme="dark"] {
@@ -111,15 +116,15 @@ details details[open] > summary {
     background: var(--summary-inner-open, #444a57);
 }
 .summary-stats {
-    font-size: 0.85em;
+    font-size: 0.95em;
     color: var(--text-muted);
     margin-left: 10px;
 }
 .month-summary, .week-summary, .day-summary {
     background: var(--summary-group, #262930) !important;
-    padding: 1px 12px 1px 30px !important;
+    padding: 2px 12px 2px 30px !important;
     font-weight: bold;
-    font-size: 0.85em !important;
+    font-size: 0.95em !important;
     color: #1095c1;
     border-left: 3px solid #1095c1;
     margin: 1px 0 1px 15px !important;
@@ -145,6 +150,9 @@ details[open] > .month-summary, details[open] > .week-summary, details[open] > .
     overflow: visible;
     margin-bottom: 0;
 }
+.day-row table[role="grid"] td {
+    font-size: 0.85rem;
+}
 [contenteditable]:empty:before {
     content: attr(placeholder);
     color: var(--text-placeholder);
@@ -156,7 +164,7 @@ details[open] > .month-summary, details[open] > .week-summary, details[open] > .
 }
 table[role="grid"] {
     margin-bottom: 0;
-    font-size: 0.9em;
+    font-size: 1em;
 }
 table[role="grid"] th, table[role="grid"] td {
     padding: 8px 12px;
@@ -176,6 +184,11 @@ table[role="grid"] th, table[role="grid"] td {
     color: var(--primary);
 }
 
+/* Main container width */
+main.container {
+    max-width: 1400px;
+}
+
 /* Modal Styles */
 dialog article {
     max-width: 600px;
@@ -184,6 +197,7 @@ dialog article {
     box-shadow: var(--shadow-modal);
     border: 1px solid var(--border-light);
     overflow: hidden; /* Ensure header radius works */
+    font-size: 0.85rem; /* Keep modals a bit smaller as requested */
 }
 #comment-modal article {
     max-width: 500px;
@@ -205,7 +219,7 @@ dialog article {
     font-style: italic;
 }
 #window-stats-modal article {
-    max-width: 1200px;
+    max-width: 1400px;
 }
 .modal-header-accent {
     background: linear-gradient(90deg, #1095c1 0%, #0d7a9e 100%);
@@ -220,6 +234,13 @@ dialog article {
     margin: 0;
     color: white;
     font-size: 1.4rem;
+}
+.window-stats-section-title {
+    font-size: 1.1rem;
+    font-weight: 600;
+    text-align: center;
+    margin-bottom: 15px;
+    color: var(--text-muted);
 }
 .modal-header-accent .close {
     color: white;
@@ -299,11 +320,11 @@ dialog article {
     border: 1px solid var(--border-extra-light);
 }
 .timeline-table th {
-    font-size: 0.7rem;
+    font-size: 0.75rem;
     padding: 8px;
 }
 .timeline-table td {
-    font-size: 0.85rem;
+    font-size: 0.8rem;
     padding: 6px 8px;
 }
 .filter-bar {
@@ -340,10 +361,13 @@ dialog article {
     z-index: 10;
     box-shadow: var(--shadow-header);
     text-transform: uppercase;
-    font-size: 0.75rem;
+    font-size: 0.7rem;
     letter-spacing: 0.05em;
     color: var(--text-muted-more);
     white-space: nowrap;
+}
+.stats-table-container td {
+    font-size: 0.8rem;
 }
 .app-badge {
     display: inline-block;
@@ -353,7 +377,7 @@ dialog article {
     color: #1095c1;
     font-weight: 500;
     font-size: 0.85em;
-    max-width: 150px;
+    max-width: 250px;
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
@@ -368,20 +392,22 @@ dialog article {
 .stats-grid-container {
     display: flex;
     gap: 0;
-    font-size: 0.85em;
+    font-size: 0.95em;
     color: var(--text-muted);
     justify-content: flex-end;
     align-items: center;
     overflow: hidden;
     min-width: 0;
+    flex: 1; /* Allow to grow */
 }
 
 .stats-grid-item {
-    flex: 0 0 120px;
+    flex: 1 1 120px; /* Allow items to grow and shrink, but stay around 120-160px */
+    max-width: 200px;
     text-align: right;
     white-space: nowrap;
     border-right: 1px solid var(--border-extra-light);
-    padding: 0 6px;
+    padding: 0 8px;
 }
 
 .stats-grid-item:last-child {
@@ -405,7 +431,7 @@ dialog article {
     border-radius: 4px;
     vertical-align: middle;
     position: relative;
-    font-size: 0.85em;
+    font-size: 0.95em;
     transition: background 0.2s, border-color 0.2s;
 }
 .comment-text:hover {
@@ -428,25 +454,25 @@ h3 {
     font-size: 1.25rem;
 }
 label {
-    font-size: 0.9rem;
+    font-size: 1rem;
 }
 small {
-    font-size: 0.7em;
+    font-size: 0.85em;
     color: var(--text-muted-more);
 }
 input[type="number"], button, select {
-    font-size: 0.85em;
+    font-size: 1em;
 }
 
 /* Compact buttons for modals */
 .btn-compact {
-    padding: 4px 12px !important;
-    font-size: 0.8rem !important;
+    padding: 6px 14px !important;
+    font-size: 0.9rem !important;
     min-height: 0 !important;
 }
 .settings-main-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+    grid-template-columns: repeat(auto-fit, minmax(450px, 1fr));
     gap: 15px;
     align-items: start;
     margin-bottom: 15px;
@@ -476,7 +502,7 @@ input[type="number"], button, select {
     display: flex;
     align-items: center;
     gap: 8px;
-    font-size: 0.95rem;
+    font-size: 1.1rem;
 }
 .settings-grid {
     display: flex;
@@ -485,7 +511,7 @@ input[type="number"], button, select {
 }
 .settings-item {
     display: grid;
-    grid-template-columns: 215px 1fr;
+    grid-template-columns: 250px 1fr;
     align-items: start;
     gap: 15px;
 }
@@ -493,7 +519,7 @@ input[type="number"], button, select {
     margin-bottom: 0;
     font-weight: 500;
     text-align: right;
-    font-size: 0.82rem;
+    font-size: 0.95rem;
     padding-right: 8px;
     padding-top: 6px;
     color: rgba(255, 255, 255, 0.9);
@@ -508,7 +534,7 @@ input[type="number"], button, select {
     margin-top: 4px;
     display: block;
     opacity: 0.6;
-    font-size: 0.72rem;
+    font-size: 0.85rem;
 }
 .columns-grid {
     display: grid;
@@ -525,7 +551,7 @@ input[type="number"], button, select {
     padding: 3px 6px;
     border-radius: 4px;
     transition: background 0.2s;
-    font-size: 0.75rem;
+    font-size: 0.85rem;
 }
 .column-checkbox:hover {
     background: rgba(255, 255, 255, 0.08);

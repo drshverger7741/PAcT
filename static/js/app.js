@@ -102,7 +102,7 @@ async function openWindowStats(title, startDate, endDate) {
                 responsive: true,
                 maintainAspectRatio: false,
                 plugins: {
-                    legend: { position: 'bottom', labels: { color: labelColor, padding: 20, font: { size: 12 } } },
+                    legend: { position: 'bottom', labels: { color: labelColor, padding: 20, font: { size: 16 } } },
                     title: { display: false }
                 },
                 cutout: '70%'

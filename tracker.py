@@ -81,17 +81,18 @@ class ActivityTracker:
 
     def _window_proc(self, hwnd, msg, wparam, lparam):
         if msg == WM_WTSSESSION_CHANGE:
+            idle_time = self.get_idle_time()
             if wparam == WTS_SESSION_LOCK:
-                self.event_queue.put_nowait(("state_change", "locked"))
+                self.event_queue.put_nowait(("state_change", "locked", idle_time))
             elif wparam == WTS_SESSION_UNLOCK:
-                self.event_queue.put_nowait(("state_change", "active"))
+                self.event_queue.put_nowait(("state_change", "active", idle_time))
             elif wparam == WTS_SESSION_LOGOFF:
-                self.event_queue.put_nowait(("state_change", "no_session"))
+                self.event_queue.put_nowait(("state_change", "no_session", idle_time))
             elif wparam == WTS_SESSION_LOGON:
-                self.event_queue.put_nowait(("state_change", "active"))
+                self.event_queue.put_nowait(("state_change", "active", idle_time))
         elif msg == WM_POWERBROADCAST:
             if wparam == PBT_APMSUSPEND:
-                self.event_queue.put_nowait(("sleep_start", time.time()))
+                self.event_queue.put_nowait(("sleep_start", time.time(), self.get_idle_time()))
             elif wparam == PBT_APMRESUMESUSPEND:
                 self.event_queue.put_nowait(("sleep_end", time.time()))
         return user32.DefWindowProcW(hwnd, msg, wparam, lparam)
@@ -119,16 +120,16 @@ class ActivityTracker:
         et = datetime.fromtimestamp(end_time).strftime("%H:%M:%S")
         await self.db.add_activity_interval(d, st, et, state)
 
-    async def change_state(self, new_state):
+    async def change_state(self, new_state, override_time=None):
         """Меняет состояние и логирует интервал."""
         if new_state == self.current_state:
             return
         
-        now = time.time()
-        await self.log_interval(self.current_state, self.last_state_change_time, now)
+        transition_time = override_time if override_time is not None else time.time()
+        await self.log_interval(self.current_state, self.last_state_change_time, transition_time)
         await self.flush_to_db()
         self.current_state = new_state
-        self.last_state_change_time = now
+        self.last_state_change_time = transition_time
 
     async def flush_to_db(self):
         with self._lock:
@@ -178,10 +179,32 @@ class ActivityTracker:
                 try:
                     event = await asyncio.wait_for(self.event_queue.get(), timeout=self.check_interval)
                     if event[0] == "state_change":
-                        await self.change_state(event[1])
+                        new_state = event[1]
+                        idle_time = event[2]
+                        now = time.time()
+                        real_transition_time = now - idle_time
+                        
+                        # Корректируем stats: переносим время бездействия в новое состояние
+                        time_to_move = now - real_transition_time
+                        with self._lock:
+                            self.stats[self.current_state] -= time_to_move
+                            self.stats[new_state] += time_to_move
+                            
+                        await self.change_state(new_state, override_time=real_transition_time)
                     elif event[0] == "sleep_start":
-                        await self.change_state("sleep")
-                        sleep_start_time = event[1]
+                        event_time = event[1]
+                        idle_time = event[2]
+                        real_sleep_start = event_time - idle_time
+                        
+                        # Корректируем stats: отнимаем время с последней активности от текущего стейта.
+                        # Мы не прибавляем его в sleep здесь, так как вся дельта сна 
+                        # будет добавлена при получении sleep_end.
+                        time_to_move = event_time - real_sleep_start
+                        with self._lock:
+                            self.stats[self.current_state] -= time_to_move
+                            
+                        await self.change_state("sleep", override_time=real_sleep_start)
+                        sleep_start_time = real_sleep_start
                     elif event[0] == "sleep_end":
                         if sleep_start_time:
                             delta = event[1] - sleep_start_time
@@ -189,6 +212,8 @@ class ActivityTracker:
                                 self.stats["sleep"] += delta
                             sleep_start_time = None
                         await self.change_state("active")
+                        # Обновляем last_tick_time, чтобы delta после сна не включала время сна
+                        self.last_tick_time = time.time()
                 except asyncio.TimeoutError:
                     pass
 
@@ -206,7 +231,18 @@ class ActivityTracker:
                 if self.current_state not in ["locked", "no_session", "sleep"]:
                     idle_time = self.get_idle_time()
                     if idle_time >= self.idle_threshold:
-                        await self.change_state("idle")
+                        if self.current_state != "idle":
+                            # Переход в простой: считаем начало с момента последней активности
+                            real_idle_start = now - idle_time
+                            
+                            # Корректируем stats: отнимаем ошибочно начисленное активное время
+                            # и переносим его в idle
+                            time_to_move = now - real_idle_start
+                            with self._lock:
+                                self.stats[self.current_state] -= time_to_move
+                                self.stats["idle"] += time_to_move
+                            
+                            await self.change_state("idle", override_time=real_idle_start)
                     else:
                         await self.change_state("active")
                 

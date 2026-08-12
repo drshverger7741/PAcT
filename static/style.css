@@ -1,6 +1,48 @@
 :root {
     --primary: #1095c1;
 }
+
+[data-theme="dark"] {
+    --summary-bg: #2d3138;
+    --summary-hover: #363b45;
+    --summary-inner: #3a3f4b;
+    --summary-inner-open: #444a57;
+    --summary-group: #262930;
+    --input-focus: #252a33;
+    --card-bg: #2d3138;
+    --text-muted: #aaa;
+    --text-muted-more: #888;
+    --text-placeholder: #555;
+    --border-light: rgba(255, 255, 255, 0.1);
+    --border-extra-light: rgba(255, 255, 255, 0.05);
+    --bg-light: rgba(255, 255, 255, 0.05);
+    --bg-extra-light: rgba(255, 255, 255, 0.03);
+    --bg-table-container: rgba(0, 0, 0, 0.2);
+    --bg-table-header: #242930;
+    --shadow-modal: 0 20px 50px rgba(0, 0, 0, 0.5);
+    --shadow-header: 0 2px 2px rgba(0, 0, 0, 0.3);
+}
+
+[data-theme="light"] {
+    --summary-bg: #e5eaf0;
+    --summary-hover: #d1d9e2;
+    --summary-inner: #d9e1e9;
+    --summary-inner-open: #cbd5e0;
+    --summary-group: #edf2f7;
+    --input-focus: #f7fafc;
+    --card-bg: #ffffff;
+    --text-muted: #666;
+    --text-muted-more: #777;
+    --text-placeholder: #999;
+    --border-light: rgba(0, 0, 0, 0.1);
+    --border-extra-light: rgba(0, 0, 0, 0.05);
+    --bg-light: rgba(0, 0, 0, 0.03);
+    --bg-extra-light: rgba(0, 0, 0, 0.01);
+    --bg-table-container: #f9f9f9;
+    --bg-table-header: #eef2f6;
+    --shadow-modal: 0 10px 30px rgba(0, 0, 0, 0.15);
+    --shadow-header: 0 1px 2px rgba(0, 0, 0, 0.1);
+}
 body {
     font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
 }
@@ -19,7 +61,7 @@ details {
 details summary {
     cursor: pointer;
     padding: 2px 15px;
-    background: #2d3138;
+    background: var(--summary-bg, #2d3138);
     border-radius: 4px;
     margin-bottom: 2px;
     transition: background 0.2s;
@@ -43,7 +85,7 @@ details summary::before {
     transform: translateY(-50%);
     transition: transform 0.2s;
     font-size: 0.8em;
-    color: #aaa;
+    color: var(--text-muted);
 }
 details[open] > summary::before {
     transform: translateY(-50%) rotate(90deg);
@@ -52,29 +94,29 @@ details summary > * {
     pointer-events: auto;
 }
 details summary:hover {
-    background: #363b45;
+    background: var(--summary-hover, #363b45);
 }
 details[open] > summary {
     border-bottom-left-radius: 0;
     border-bottom-right-radius: 0;
     margin-bottom: 0;
-    background: #363b45;
+    background: var(--summary-hover, #363b45);
 }
 details details summary {
-    background: #3a3f4b;
+    background: var(--summary-inner, #3a3f4b);
     margin-left: 20px;
     border-radius: 6px;
 }
 details details[open] > summary {
-    background: #444a57;
+    background: var(--summary-inner-open, #444a57);
 }
 .summary-stats {
     font-size: 0.85em;
-    color: #aaa;
+    color: var(--text-muted);
     margin-left: 10px;
 }
 .week-summary, .day-summary {
-    background: #262930 !important;
+    background: var(--summary-group, #262930) !important;
     padding: 1px 15px 1px 35px !important;
     font-weight: bold;
     font-size: 0.9em;
@@ -99,12 +141,12 @@ details[open] > .week-summary, details[open] > .day-summary {
 }
 [contenteditable]:empty:before {
     content: attr(placeholder);
-    color: #555;
+    color: var(--text-placeholder);
     font-style: italic;
 }
 [contenteditable]:focus {
     outline: 2px solid #1095c1;
-    background: #252a33 !important;
+    background: var(--input-focus, #252a33) !important;
 }
 table[role="grid"] {
     margin-bottom: 0;
@@ -133,8 +175,8 @@ dialog article {
     max-width: 600px;
     width: 100%;
     border-radius: 12px;
-    box-shadow: 0 20px 50px rgba(0,0,0,0.5);
-    border: 1px solid rgba(255,255,255,0.1);
+    box-shadow: var(--shadow-modal);
+    border: 1px solid var(--border-light);
     overflow: hidden; /* Ensure header radius works */
 }
 #comment-modal article {
@@ -144,15 +186,15 @@ dialog article {
     min-height: 120px;
     font-size: 1rem;
     line-height: 1.5;
-    background: rgba(255,255,255,0.05);
-    border: 1px solid rgba(255,255,255,0.1);
+    background: var(--bg-light);
+    border: 1px solid var(--border-light);
     border-radius: 8px;
     padding: 15px;
     margin-top: 10px;
 }
 #modal-description {
     font-size: 0.85rem;
-    color: #888;
+    color: var(--text-muted-more);
     margin-bottom: 5px;
     font-style: italic;
 }
@@ -196,7 +238,7 @@ dialog article {
     left: 0;
     background-color: white !important;
     border-radius: 2px;
-    box-shadow: 0 0 2px rgba(0,0,0,0.5);
+    box-shadow: 0 0 2px var(--shadow-header);
 }
 .modal-header-accent .close::before {
     transform: rotate(45deg);
@@ -210,14 +252,14 @@ dialog article {
     display: flex;
     gap: 5px;
     margin: -10px 0 20px 0;
-    border-bottom: 1px solid rgba(255,255,255,0.1);
+    border-bottom: 1px solid var(--border-light);
     padding-bottom: 0;
 }
 .tab-btn {
     background: transparent;
     border: none;
     border-bottom: 3px solid transparent;
-    color: #888;
+    color: var(--text-muted-more);
     padding: 8px 20px;
     cursor: pointer;
     font-weight: 600;
@@ -227,8 +269,8 @@ dialog article {
     border-radius: 0;
 }
 .tab-btn:hover {
-    color: white;
-    background: rgba(255,255,255,0.05);
+    color: var(--primary);
+    background: var(--bg-light);
 }
 .tab-btn.active {
     color: var(--primary);
@@ -247,8 +289,8 @@ dialog article {
     max-height: 600px;
     overflow-y: auto;
     border-radius: 8px;
-    background: rgba(0,0,0,0.2);
-    border: 1px solid rgba(255,255,255,0.05);
+    background: var(--bg-table-container);
+    border: 1px solid var(--border-extra-light);
 }
 .timeline-table th {
     font-size: 0.7rem;
@@ -274,27 +316,27 @@ dialog article {
     max-height: 500px;
     overflow-y: auto;
     border-radius: 8px;
-    background: rgba(0,0,0,0.2);
+    background: var(--bg-table-container);
     padding: 0;
-    border: 1px solid rgba(255,255,255,0.05);
+    border: 1px solid var(--border-extra-light);
 }
 .stats-table-container table {
     margin: 0;
     border-collapse: collapse;
 }
 .stats-table-container tr:nth-child(even) {
-    background: rgba(255,255,255,0.03);
+    background: var(--bg-extra-light);
 }
 .stats-table-container th {
     position: sticky;
     top: 0;
-    background: #242930;
+    background: var(--bg-table-header);
     z-index: 10;
-    box-shadow: 0 2px 2px rgba(0,0,0,0.3);
+    box-shadow: var(--shadow-header);
     text-transform: uppercase;
     font-size: 0.75rem;
     letter-spacing: 0.05em;
-    color: #888;
+    color: var(--text-muted-more);
     white-space: nowrap;
 }
 .app-badge {
@@ -318,12 +360,12 @@ dialog article {
 }
 .comment-text {
     cursor: pointer;
-    border-bottom: 1px dashed #666;
+    border-bottom: 1px dashed var(--text-muted);
     display: inline-block;
     min-height: 1.5em;
     min-width: 120px;
     padding: 4px 10px;
-    background: rgba(255, 255, 255, 0.07);
+    background: var(--bg-light);
     border-radius: 4px;
     vertical-align: middle;
     position: relative;
@@ -333,7 +375,7 @@ dialog article {
 .comment-text:hover {
     color: var(--primary);
     border-bottom-color: var(--primary);
-    background: rgba(255, 255, 255, 0.15);
+    background: var(--bg-extra-light);
 }
 .comment-text:empty::after, .comment-text:blank::after {
     opacity: 0.5;
@@ -354,7 +396,7 @@ label {
 }
 small {
     font-size: 0.7em;
-    color: #888;
+    color: var(--text-muted-more);
 }
 input[type="number"], button, select {
     font-size: 0.85em;
@@ -379,10 +421,10 @@ input[type="number"], button, select {
     }
 }
 .settings-card {
-    background: #2d3138;
+    background: var(--card-bg);
     padding: 12px 15px;
     border-radius: 8px;
-    border: 1px solid rgba(255, 255, 255, 0.05);
+    border: 1px solid var(--border-extra-light);
     margin-bottom: 0;
 }
 .danger-zone {

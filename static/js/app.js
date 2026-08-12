@@ -67,7 +67,7 @@ async function openWindowStats(title, startDate, endDate) {
                         <span title="${row.window_title}">${row.window_title}</span>
                     </div>
                 </td>
-                <td class="duration-text" style="text-align: right; white-space: nowrap;">${(row.total_duration / 3600).toFixed(2)}h</td>
+                <td class="duration-text" style="text-align: right; white-space: nowrap;">${(row.total_duration / 3600).toFixed(2)}${CONFIG.hourShort}</td>
             </tr>
         `).join('');
     }
@@ -81,6 +81,9 @@ async function openWindowStats(title, startDate, endDate) {
         const ctx = chartCanvas.getContext('2d');
         if (windowChart) windowChart.destroy();
         
+        const isLight = document.documentElement.getAttribute('data-theme') === 'light';
+        const labelColor = isLight ? '#666' : '#ccc';
+        
         windowChart = new Chart(ctx, {
             type: 'doughnut',
             data: {
@@ -90,14 +93,16 @@ async function openWindowStats(title, startDate, endDate) {
                     backgroundColor: [
                         '#1095c1', '#4caf50', '#ffeb3b', '#f44336', '#9c27b0',
                         '#3f51b5', '#00bcd4', '#8bc34a', '#ffc107', '#ff9800'
-                    ]
+                    ],
+                    borderWidth: isLight ? 1 : 0,
+                    borderColor: isLight ? '#fff' : 'transparent'
                 }]
             },
             options: {
                 responsive: true,
                 maintainAspectRatio: false,
                 plugins: {
-                    legend: { position: 'bottom', labels: { color: '#ccc', padding: 20, font: { size: 12 } } },
+                    legend: { position: 'bottom', labels: { color: labelColor, padding: 20, font: { size: 12 } } },
                     title: { display: false }
                 },
                 cutout: '70%'

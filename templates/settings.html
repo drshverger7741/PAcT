@@ -49,12 +49,22 @@
                     <label for="language">{{ i18n.language }}</label>
                     <div class="input-wrapper">
                         <select id="language" name="language">
-                            {% if language == 'ru' %}
-                            <option value="ru" selected>Русский</option>
-                            <option value="en">English</option>
+                            <option value="ru" {% if language == "ru" %}selected{% endif %}>{{ i18n.lang_name_ru }}</option>
+                            <option value="en" {% if language == "en" %}selected{% endif %}>{{ i18n.lang_name_en }}</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="settings-item">
+                    <label for="theme">{{ i18n.theme }}</label>
+                    <div class="input-wrapper">
+                        <select id="theme" name="theme">
+                            {% if theme == "light" %}
+                            <option value="light" selected>{{ i18n.theme_light }}</option>
+                            <option value="dark">{{ i18n.theme_dark }}</option>
                             {% else %}
-                            <option value="ru">Русский</option>
-                            <option value="en" selected>English</option>
+                            <option value="light">{{ i18n.theme_light }}</option>
+                            <option value="dark" selected>{{ i18n.theme_dark }}</option>
                             {% endif %}
                         </select>
                     </div>

@@ -1,87 +1,12 @@
 import asyncio
-import ctypes
-import ctypes.wintypes
 import threading
 import time
 import logging
 import os
 from datetime import date, datetime
-from typing import Dict, Optional
+import winapi_utils as winapi
 
 logger = logging.getLogger(__name__)
-
-# WinAPI Constants
-WTS_SESSION_LOCK = 0x7
-WTS_SESSION_UNLOCK = 0x8
-WTS_SESSION_LOGON = 0x5
-WTS_SESSION_LOGOFF = 0x6
-WM_WTSSESSION_CHANGE = 0x02B1
-NOTIFY_FOR_THIS_SESSION = 0
-
-WM_POWERBROADCAST = 0x0218
-PBT_APMSUSPEND = 0x0004
-PBT_APMRESUMESUSPEND = 0x0007
-
-# WinAPI Structures
-class LASTINPUTINFO(ctypes.Structure):
-    _fields_ = [("cbSize", ctypes.wintypes.UINT), ("dwTime", ctypes.wintypes.DWORD)]
-
-class WNDCLASSW(ctypes.Structure):
-    _fields_ = [
-        ("style", ctypes.wintypes.UINT),
-        ("lpfnWndProc", ctypes.WINFUNCTYPE(ctypes.c_longlong, ctypes.wintypes.HWND, ctypes.wintypes.UINT, ctypes.wintypes.WPARAM, ctypes.wintypes.LPARAM)),
-        ("cbClsExtra", ctypes.c_int),
-        ("cbWndExtra", ctypes.c_int),
-        ("hInstance", ctypes.wintypes.HINSTANCE),
-        ("hIcon", ctypes.wintypes.HANDLE),
-        ("hCursor", ctypes.wintypes.HANDLE),
-        ("hbrBackground", ctypes.wintypes.HBRUSH),
-        ("lpszMenuName", ctypes.wintypes.LPCWSTR),
-        ("lpszClassName", ctypes.wintypes.LPCWSTR),
-    ]
-
-# WinAPI Functions
-user32 = ctypes.windll.user32
-kernel32 = ctypes.windll.kernel32
-wtsapi32 = ctypes.windll.wtsapi32
-psapi = ctypes.windll.psapi
-
-user32.DefWindowProcW.argtypes = [ctypes.wintypes.HWND, ctypes.wintypes.UINT, ctypes.wintypes.WPARAM, ctypes.wintypes.LPARAM]
-user32.DefWindowProcW.restype = ctypes.c_longlong
-
-user32.RegisterClassW.argtypes = [ctypes.POINTER(WNDCLASSW)]
-user32.RegisterClassW.restype = ctypes.wintypes.ATOM
-
-user32.CreateWindowExW.argtypes = [
-    ctypes.wintypes.DWORD,
-    ctypes.wintypes.LPCWSTR,
-    ctypes.wintypes.LPCWSTR,
-    ctypes.wintypes.DWORD,
-    ctypes.c_int,
-    ctypes.c_int,
-    ctypes.c_int,
-    ctypes.c_int,
-    ctypes.wintypes.HWND,
-    ctypes.wintypes.HMENU,
-    ctypes.wintypes.HINSTANCE,
-    ctypes.wintypes.LPVOID
-]
-user32.CreateWindowExW.restype = ctypes.wintypes.HWND
-
-user32.GetForegroundWindow.argtypes = []
-user32.GetForegroundWindow.restype = ctypes.wintypes.HWND
-
-user32.GetWindowTextW.argtypes = [ctypes.wintypes.HWND, ctypes.wintypes.LPWSTR, ctypes.c_int]
-user32.GetWindowTextW.restype = ctypes.c_int
-
-user32.GetWindowThreadProcessId.argtypes = [ctypes.wintypes.HWND, ctypes.POINTER(ctypes.wintypes.DWORD)]
-user32.GetWindowThreadProcessId.restype = ctypes.wintypes.DWORD
-
-kernel32.OpenProcess.argtypes = [ctypes.wintypes.DWORD, ctypes.wintypes.BOOL, ctypes.wintypes.DWORD]
-kernel32.OpenProcess.restype = ctypes.wintypes.HANDLE
-
-psapi.GetModuleFileNameExW.argtypes = [ctypes.wintypes.HANDLE, ctypes.wintypes.HMODULE, ctypes.wintypes.LPWSTR, ctypes.wintypes.DWORD]
-psapi.GetModuleFileNameExW.restype = ctypes.wintypes.DWORD
 
 class ActivityTracker:
     def __init__(self, db_module):
@@ -116,73 +41,73 @@ class ActivityTracker:
         self.window_buffer = [] # List of (title, app, start_time, end_time, duration)
 
     def get_idle_time(self) -> float:
-        lii = LASTINPUTINFO()
-        lii.cbSize = ctypes.sizeof(LASTINPUTINFO)
-        if user32.GetLastInputInfo(ctypes.byref(lii)):
-            millis = kernel32.GetTickCount() - lii.dwTime
+        lii = winapi.LASTINPUTINFO()
+        lii.cbSize = winapi.sizeof(winapi.LASTINPUTINFO)
+        if winapi.user32.GetLastInputInfo(winapi.byref(lii)):
+            millis = winapi.kernel32.GetTickCount() - lii.dwTime
             return millis / 1000.0
         return 0.0
 
     def get_active_window_info(self):
-        hwnd = user32.GetForegroundWindow()
+        hwnd = winapi.user32.GetForegroundWindow()
         if not hwnd:
             return None, None
         
         # Заголовок окна
         length = 512
-        buf = ctypes.create_unicode_buffer(length)
-        user32.GetWindowTextW(hwnd, buf, length)
+        buf = winapi.create_unicode_buffer(length)
+        winapi.user32.GetWindowTextW(hwnd, buf, length)
         title = buf.value
         
         # Имя приложения (exe)
-        pid = ctypes.wintypes.DWORD()
-        user32.GetWindowThreadProcessId(hwnd, ctypes.byref(pid))
+        pid = winapi.ctypes.wintypes.DWORD()
+        winapi.user32.GetWindowThreadProcessId(hwnd, winapi.byref(pid))
         
         PROCESS_QUERY_INFORMATION = 0x0400
         PROCESS_VM_READ = 0x0010
-        handle = kernel32.OpenProcess(PROCESS_QUERY_INFORMATION | PROCESS_VM_READ, False, pid)
+        handle = winapi.kernel32.OpenProcess(PROCESS_QUERY_INFORMATION | PROCESS_VM_READ, False, pid)
         app_name = "Unknown"
         if handle:
-            buf = ctypes.create_unicode_buffer(length)
-            if psapi.GetModuleFileNameExW(handle, 0, buf, length):
+            buf = winapi.create_unicode_buffer(length)
+            if winapi.psapi.GetModuleFileNameExW(handle, 0, buf, length):
                 app_name = os.path.basename(buf.value)
-            kernel32.CloseHandle(handle)
+            winapi.kernel32.CloseHandle(handle)
         
         return title, app_name
 
     def _window_proc(self, hwnd, msg, wparam, lparam):
-        if msg == WM_WTSSESSION_CHANGE:
+        if msg == winapi.WM_WTSSESSION_CHANGE:
             idle_time = self.get_idle_time()
-            if wparam == WTS_SESSION_LOCK:
+            if wparam == winapi.WTS_SESSION_LOCK:
                 self.event_queue.put_nowait(("state_change", "locked", idle_time))
-            elif wparam == WTS_SESSION_UNLOCK:
+            elif wparam == winapi.WTS_SESSION_UNLOCK:
                 self.event_queue.put_nowait(("state_change", "active", idle_time))
-            elif wparam == WTS_SESSION_LOGOFF:
+            elif wparam == winapi.WTS_SESSION_LOGOFF:
                 self.event_queue.put_nowait(("state_change", "no_session", idle_time))
-            elif wparam == WTS_SESSION_LOGON:
+            elif wparam == winapi.WTS_SESSION_LOGON:
                 self.event_queue.put_nowait(("state_change", "active", idle_time))
-        elif msg == WM_POWERBROADCAST:
-            if wparam == PBT_APMSUSPEND:
+        elif msg == winapi.WM_POWERBROADCAST:
+            if wparam == winapi.PBT_APMSUSPEND:
                 self.event_queue.put_nowait(("sleep_start", time.time(), self.get_idle_time()))
-            elif wparam == PBT_APMRESUMESUSPEND:
+            elif wparam == winapi.PBT_APMRESUMESUSPEND:
                 self.event_queue.put_nowait(("sleep_end", time.time()))
-        return user32.DefWindowProcW(hwnd, msg, wparam, lparam)
+        return winapi.user32.DefWindowProcW(hwnd, msg, wparam, lparam)
 
     def _create_message_window(self):
-        wc = WNDCLASSW()
-        wc.lpfnWndProc = ctypes.WINFUNCTYPE(ctypes.c_longlong, ctypes.wintypes.HWND, ctypes.wintypes.UINT, ctypes.wintypes.WPARAM, ctypes.wintypes.LPARAM)(self._window_proc)
+        wc = winapi.WNDCLASSW()
+        wc.lpfnWndProc = winapi.WINFUNCTYPE(winapi.c_longlong, winapi.ctypes.wintypes.HWND, winapi.ctypes.wintypes.UINT, winapi.ctypes.wintypes.WPARAM, winapi.ctypes.wintypes.LPARAM)(self._window_proc)
         wc.lpszClassName = "ActivityTrackerMessageWindow"
-        wc.hInstance = kernel32.GetModuleHandleW(None)
+        wc.hInstance = winapi.kernel32.GetModuleHandleW(None)
         
-        user32.RegisterClassW(ctypes.byref(wc))
-        hwnd = user32.CreateWindowExW(0, wc.lpszClassName, "Tracker", 0, 0, 0, 0, 0, 0, None, wc.hInstance, None)
+        winapi.user32.RegisterClassW(winapi.byref(wc))
+        hwnd = winapi.user32.CreateWindowExW(0, wc.lpszClassName, "Tracker", 0, 0, 0, 0, 0, 0, None, wc.hInstance, None)
         
-        wtsapi32.WTSRegisterSessionNotification(hwnd, NOTIFY_FOR_THIS_SESSION)
+        winapi.wtsapi32.WTSRegisterSessionNotification(hwnd, winapi.NOTIFY_FOR_THIS_SESSION)
         
-        msg = ctypes.wintypes.MSG()
-        while user32.GetMessageW(ctypes.byref(msg), 0, 0, 0) > 0:
-            user32.TranslateMessage(ctypes.byref(msg))
-            user32.DispatchMessageW(ctypes.byref(msg))
+        msg = winapi.ctypes.wintypes.MSG()
+        while winapi.user32.GetMessageW(winapi.byref(msg), 0, 0, 0) > 0:
+            winapi.user32.TranslateMessage(winapi.byref(msg))
+            winapi.user32.DispatchMessageW(winapi.byref(msg))
 
     async def log_interval(self, state, start_time, end_time):
         """Логирует интервал в БД."""

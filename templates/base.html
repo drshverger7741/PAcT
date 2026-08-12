@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="{{ language or 'ru' }}" data-theme="dark">
+<html lang="{{ language or 'ru' }}" data-theme="{{ theme or 'dark' }}">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -13,6 +13,11 @@
     <!-- Local Scripts -->
     <script src="/static/htmx.min.js"></script>
     <script src="/static/js/chart.js"></script>
+    <script>
+        const CONFIG = {
+            hourShort: '{{ i18n.hour_short }}'
+        };
+    </script>
     <script src="/static/js/app.js"></script>
     
     <style>

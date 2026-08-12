@@ -1,18 +1,18 @@
 {% for month_data in grouped_stats %}
 <details {% if month_data.is_current %}open{% endif %}>
     <summary style="display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: nowrap; overflow: hidden;">
-        <strong style="flex: 0 0 200px; white-space: nowrap;">{{ month_data.month | month_name }} {{ month_data.year }}</strong>
-        <div style="flex: 1; display: flex; gap: 8px; font-size: 0.8em; color: #ccc; overflow: hidden; justify-content: flex-end;">
-            {% if 'active_seconds' in visible_columns %}<span title="{{ i18n.active }}" style="white-space: nowrap;">{{ i18n.act_short }}: {{ month_data.total.active_seconds | hours }}ч</span>{% endif %}
-            {% if 'idle_seconds' in visible_columns %}<span title="{{ i18n.idle }}" style="white-space: nowrap;">{{ i18n.idle_short }}: {{ month_data.total.idle_seconds | hours }}ч</span>{% endif %}
-            {% if 'locked_seconds' in visible_columns %}<span title="{{ i18n.locked }}" style="white-space: nowrap;">{{ i18n.locked_short }}: {{ month_data.total.locked_seconds | hours }}ч</span>{% endif %}
-            {% if 'no_session_seconds' in visible_columns %}<span title="{{ i18n.no_session }}" style="white-space: nowrap;">{{ i18n.no_session_short }}: {{ month_data.total.no_session_seconds | hours }}ч</span>{% endif %}
-            {% if 'sleep_seconds' in visible_columns %}<span title="{{ i18n.sleep }}" style="white-space: nowrap;">{{ i18n.sleep_short }}: {{ month_data.total.sleep_seconds | hours }}ч</span>{% endif %}
-            {% if 'shutdown_seconds' in visible_columns %}<span title="{{ i18n.shutdown }}" style="white-space: nowrap;">{{ i18n.shutdown_short }}: {{ month_data.total.shutdown_seconds | hours }}ч</span>{% endif %}
-            {% if 'unknown_seconds' in visible_columns %}<span title="{{ i18n.unknown }}" style="white-space: nowrap;">{{ i18n.unknown_short }}: {{ month_data.total.unknown_seconds | hours }}ч</span>{% endif %}
+        <strong style="flex: 0 0 200px; white-space: nowrap;">{{ month_data.month | month_name(language) }} {{ month_data.year }}</strong>
+        <div style="flex: 1; display: flex; gap: 8px; font-size: 0.8em; color: var(--text-muted); overflow: hidden; justify-content: flex-end;">
+            {% if 'active_seconds' in visible_columns %}<span title="{{ i18n.active }}" style="white-space: nowrap;">{{ i18n.act_short }}: {{ month_data.total.active_seconds | hours }}{{ i18n.hour_short }}</span>{% endif %}
+            {% if 'idle_seconds' in visible_columns %}<span title="{{ i18n.idle }}" style="white-space: nowrap;">{{ i18n.idle_short }}: {{ month_data.total.idle_seconds | hours }}{{ i18n.hour_short }}</span>{% endif %}
+            {% if 'locked_seconds' in visible_columns %}<span title="{{ i18n.locked }}" style="white-space: nowrap;">{{ i18n.locked_short }}: {{ month_data.total.locked_seconds | hours }}{{ i18n.hour_short }}</span>{% endif %}
+            {% if 'no_session_seconds' in visible_columns %}<span title="{{ i18n.no_session }}" style="white-space: nowrap;">{{ i18n.no_session_short }}: {{ month_data.total.no_session_seconds | hours }}{{ i18n.hour_short }}</span>{% endif %}
+            {% if 'sleep_seconds' in visible_columns %}<span title="{{ i18n.sleep }}" style="white-space: nowrap;">{{ i18n.sleep_short }}: {{ month_data.total.sleep_seconds | hours }}{{ i18n.hour_short }}</span>{% endif %}
+            {% if 'shutdown_seconds' in visible_columns %}<span title="{{ i18n.shutdown }}" style="white-space: nowrap;">{{ i18n.shutdown_short }}: {{ month_data.total.shutdown_seconds | hours }}{{ i18n.hour_short }}</span>{% endif %}
+            {% if 'unknown_seconds' in visible_columns %}<span title="{{ i18n.unknown }}" style="white-space: nowrap;">{{ i18n.unknown_short }}: {{ month_data.total.unknown_seconds | hours }}{{ i18n.hour_short }}</span>{% endif %}
         </div>
         <div style="flex: 0 0 120px; display: flex; align-items: center; justify-content: flex-end;">
-            <span class="stats-icon" onclick="event.stopPropagation(); openWindowStats('{{ month_data.month | month_name }} {{ month_data.year }}', '{{ month_data.start_date }}', '{{ month_data.end_date }}')">📊</span>
+            <span class="stats-icon" onclick="event.stopPropagation(); openWindowStats('{{ month_data.month | month_name(language) }} {{ month_data.year }}', '{{ month_data.start_date }}', '{{ month_data.end_date }}')">📊</span>
         </div>
     </summary>
     
@@ -21,13 +21,13 @@
         <summary class="week-summary" style="display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: nowrap; overflow: hidden;">
             <strong style="flex: 0 0 150px; white-space: nowrap;">{{ i18n.week }} {{ week.number }}</strong>
             <div style="flex: 1; display: flex; gap: 8px; font-size: 0.8em; color: #ccc; overflow: hidden; justify-content: flex-end;">
-                {% if 'active_seconds' in visible_columns %}<span title="{{ i18n.active }}" style="white-space: nowrap;"> {{ i18n.act_short }}: {{ week.total.active_seconds | hours }}ч</span>{% endif %}
-                {% if 'idle_seconds' in visible_columns %}<span title="{{ i18n.idle }}" style="white-space: nowrap;"> {{ i18n.idle_short }}: {{ week.total.idle_seconds | hours }}ч</span>{% endif %}
-                {% if 'locked_seconds' in visible_columns %}<span title="{{ i18n.locked }}" style="white-space: nowrap;"> {{ i18n.locked_short }}: {{ week.total.locked_seconds | hours }}ч</span>{% endif %}
-                {% if 'no_session_seconds' in visible_columns %}<span title="{{ i18n.no_session }}" style="white-space: nowrap;"> {{ i18n.no_session_short }}: {{ week.total.no_session_seconds | hours }}ч</span>{% endif %}
-                {% if 'sleep_seconds' in visible_columns %}<span title="{{ i18n.sleep }}" style="white-space: nowrap;"> {{ i18n.sleep_short }}: {{ week.total.sleep_seconds | hours }}ч</span>{% endif %}
-                {% if 'shutdown_seconds' in visible_columns %}<span title="{{ i18n.shutdown }}" style="white-space: nowrap;"> {{ i18n.shutdown_short }}: {{ week.total.shutdown_seconds | hours }}ч</span>{% endif %}
-                {% if 'unknown_seconds' in visible_columns %}<span title="{{ i18n.unknown }}" style="white-space: nowrap;"> {{ i18n.unknown_short }}: {{ week.total.unknown_seconds | hours }}ч</span>{% endif %}
+                {% if 'active_seconds' in visible_columns %}<span title="{{ i18n.active }}" style="white-space: nowrap;"> {{ i18n.act_short }}: {{ week.total.active_seconds | hours }}{{ i18n.hour_short }}</span>{% endif %}
+                {% if 'idle_seconds' in visible_columns %}<span title="{{ i18n.idle }}" style="white-space: nowrap;"> {{ i18n.idle_short }}: {{ week.total.idle_seconds | hours }}{{ i18n.hour_short }}</span>{% endif %}
+                {% if 'locked_seconds' in visible_columns %}<span title="{{ i18n.locked }}" style="white-space: nowrap;"> {{ i18n.locked_short }}: {{ week.total.locked_seconds | hours }}{{ i18n.hour_short }}</span>{% endif %}
+                {% if 'no_session_seconds' in visible_columns %}<span title="{{ i18n.no_session }}" style="white-space: nowrap;"> {{ i18n.no_session_short }}: {{ week.total.no_session_seconds | hours }}{{ i18n.hour_short }}</span>{% endif %}
+                {% if 'sleep_seconds' in visible_columns %}<span title="{{ i18n.sleep }}" style="white-space: nowrap;"> {{ i18n.sleep_short }}: {{ week.total.sleep_seconds | hours }}{{ i18n.hour_short }}</span>{% endif %}
+                {% if 'shutdown_seconds' in visible_columns %}<span title="{{ i18n.shutdown }}" style="white-space: nowrap;"> {{ i18n.shutdown_short }}: {{ week.total.shutdown_seconds | hours }}{{ i18n.hour_short }}</span>{% endif %}
+                {% if 'unknown_seconds' in visible_columns %}<span title="{{ i18n.unknown }}" style="white-space: nowrap;"> {{ i18n.unknown_short }}: {{ week.total.unknown_seconds | hours }}{{ i18n.hour_short }}</span>{% endif %}
             </div>
             <div style="flex: 0 0 120px; display: flex; align-items: center; justify-content: flex-end;">
                 <span class="stats-icon" onclick="event.stopPropagation(); openWindowStats('{{ i18n.week }} {{ week.number }}', '{{ week.start_date }}', '{{ week.end_date }}')">📊</span>
@@ -40,22 +40,22 @@
                 <summary class="day-summary">
                     <div style="display: flex; justify-content: space-between; width: 100%; align-items: center; gap: 10px; flex-wrap: nowrap; overflow: hidden;">
                         <div style="flex: 0 0 200px; white-space: nowrap;">
-                            <strong>{{ day.date | date_custom }}</strong>
+                            <strong>{{ day.date | date_custom(language) }}</strong>
                         </div>
-                        <div style="flex: 1; display: flex; gap: 8px; font-size: 0.8em; color: #ccc; overflow: hidden; justify-content: flex-end;" onclick="event.stopPropagation();">
-                            {% if 'active_seconds' in visible_columns %}<span title="{{ i18n.active }}" style="white-space: nowrap;">{{ i18n.act_short }}: {{ day.active_seconds | hours }}ч</span>{% endif %}
-                            {% if 'idle_seconds' in visible_columns %}<span title="{{ i18n.idle }}" style="white-space: nowrap;">{{ i18n.idle_short }}: {{ day.idle_seconds | hours }}ч</span>{% endif %}
-                            {% if 'locked_seconds' in visible_columns %}<span title="{{ i18n.locked }}" style="white-space: nowrap;">{{ i18n.locked_short }}: {{ day.locked_seconds | hours }}ч</span>{% endif %}
-                            {% if 'no_session_seconds' in visible_columns %}<span title="{{ i18n.no_session }}" style="white-space: nowrap;">{{ i18n.no_session_short }}: {{ day.no_session_seconds | hours }}ч</span>{% endif %}
-                            {% if 'sleep_seconds' in visible_columns %}<span title="{{ i18n.sleep }}" style="white-space: nowrap;">{{ i18n.sleep_short }}: {{ day.sleep_seconds | hours }}ч</span>{% endif %}
-                            {% if 'shutdown_seconds' in visible_columns %}<span title="{{ i18n.shutdown }}" style="white-space: nowrap;">{{ i18n.shutdown_short }}: {{ day.shutdown_seconds | hours }}ч</span>{% endif %}
-                            {% if 'unknown_seconds' in visible_columns %}<span title="{{ i18n.unknown }}" style="white-space: nowrap;">{{ i18n.unknown_short }}: {{ day.unknown_seconds | hours }}ч</span>{% endif %}
+                        <div style="flex: 1; display: flex; gap: 8px; font-size: 0.8em; color: var(--text-muted); overflow: hidden; justify-content: flex-end;" onclick="event.stopPropagation();">
+                            {% if 'active_seconds' in visible_columns %}<span title="{{ i18n.active }}" style="white-space: nowrap;">{{ i18n.act_short }}: {{ day.active_seconds | hours }}{{ i18n.hour_short }}</span>{% endif %}
+                            {% if 'idle_seconds' in visible_columns %}<span title="{{ i18n.idle }}" style="white-space: nowrap;">{{ i18n.idle_short }}: {{ day.idle_seconds | hours }}{{ i18n.hour_short }}</span>{% endif %}
+                            {% if 'locked_seconds' in visible_columns %}<span title="{{ i18n.locked }}" style="white-space: nowrap;">{{ i18n.locked_short }}: {{ day.locked_seconds | hours }}{{ i18n.hour_short }}</span>{% endif %}
+                            {% if 'no_session_seconds' in visible_columns %}<span title="{{ i18n.no_session }}" style="white-space: nowrap;">{{ i18n.no_session_short }}: {{ day.no_session_seconds | hours }}{{ i18n.hour_short }}</span>{% endif %}
+                            {% if 'sleep_seconds' in visible_columns %}<span title="{{ i18n.sleep }}" style="white-space: nowrap;">{{ i18n.sleep_short }}: {{ day.sleep_seconds | hours }}{{ i18n.hour_short }}</span>{% endif %}
+                            {% if 'shutdown_seconds' in visible_columns %}<span title="{{ i18n.shutdown }}" style="white-space: nowrap;">{{ i18n.shutdown_short }}: {{ day.shutdown_seconds | hours }}{{ i18n.hour_short }}</span>{% endif %}
+                            {% if 'unknown_seconds' in visible_columns %}<span title="{{ i18n.unknown }}" style="white-space: nowrap;">{{ i18n.unknown_short }}: {{ day.unknown_seconds | hours }}{{ i18n.hour_short }}</span>{% endif %}
                         </div>
                         <div style="flex: 0 0 120px; display: flex; align-items: center; justify-content: flex-end; gap: 8px;">
-                            <span class="stats-icon" onclick="event.stopPropagation(); openWindowStats('{{ day.date | date_custom }}', '{{ day.date }}', '{{ day.date }}')">📊</span>
+                            <span class="stats-icon" onclick="event.stopPropagation(); openWindowStats('{{ day.date | date_custom(language) }}', '{{ day.date }}', '{{ day.date }}')">📊</span>
                             <div id="comment-day-{{ day.date }}" 
                                  class="comment-text"
-                                 onclick="event.stopPropagation(); openModal('{{ i18n.day_comment_title }}', '{{ day.date | date_custom }}', '/api/day_comment/{{ day.date }}', 'comment-day-{{ day.date }}', this.textContent.trim())">{{ day.comment or '' }}</div>
+                                 onclick="event.stopPropagation(); openModal('{{ i18n.day_comment_title }}', '{{ day.date | date_custom(language) }}', '/api/day_comment/{{ day.date }}', 'comment-day-{{ day.date }}', this.textContent.trim())">{{ day.comment or '' }}</div>
                         </div>
                     </div>
                 </summary>

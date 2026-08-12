@@ -457,11 +457,15 @@ label {
     font-size: 1rem;
 }
 small {
-    font-size: 0.85em;
+    font-size: 0.8rem;
     color: var(--text-muted-more);
+    line-height: 1.1;
 }
-input[type="number"], button, select {
-    font-size: 1em;
+input[role="switch"] {
+    width: 40px !important;
+    height: 20px !important;
+    margin: 0 !important;
+    cursor: pointer;
 }
 
 /* Compact buttons for modals */
@@ -469,6 +473,23 @@ input[type="number"], button, select {
     padding: 6px 14px !important;
     font-size: 0.9rem !important;
     min-height: 0 !important;
+}
+.settings-three-col-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 20px;
+    align-items: start;
+    margin-bottom: 20px;
+}
+@media (max-width: 1200px) {
+    .settings-three-col-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+@media (max-width: 800px) {
+    .settings-three-col-grid {
+        grid-template-columns: 1fr;
+    }
 }
 .settings-main-grid {
     display: grid;
@@ -482,9 +503,15 @@ input[type="number"], button, select {
         grid-template-columns: 1fr;
     }
 }
+.settings-two-col-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+    gap: 15px;
+    align-items: stretch;
+}
 .settings-card {
     background: var(--card-bg);
-    padding: 12px 15px;
+    padding: 16px 20px;
     border-radius: 8px;
     border: 1px solid var(--border-extra-light);
     margin-bottom: 0;
@@ -494,6 +521,40 @@ input[type="number"], button, select {
     border: 1px dashed #f44336;
     background: rgba(244, 67, 54, 0.03);
     margin-top: 5px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+.settings-grid-compact {
+    display: grid;
+    gap: 8px;
+    margin-bottom: 10px;
+}
+.settings-item-compact {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+.settings-item-compact label {
+    font-size: 0.9rem;
+    font-weight: 600;
+    margin-bottom: 0;
+    color: var(--primary);
+}
+.settings-item-compact input, .settings-item-compact select {
+    height: 38px !important;
+    padding: 6px 12px !important;
+    font-size: 0.95rem !important;
+    width: 100% !important;
+    margin-bottom: 0 !important;
+}
+.settings-item-compact small {
+    font-size: 0.8rem;
+    opacity: 0.7;
+    line-height: 1.1;
+    margin-top: 1px;
+    margin-bottom: 0;
+    display: block;
 }
 .settings-group-title {
     font-weight: bold;
@@ -520,9 +581,8 @@ input[type="number"], button, select {
     font-weight: 500;
     text-align: right;
     font-size: 0.95rem;
-    padding-right: 8px;
-    padding-top: 6px;
-    color: rgba(255, 255, 255, 0.9);
+    padding-right: 12px;
+    padding-top: 4px;
 }
 .settings-item .input-wrapper {
     display: flex;
@@ -530,11 +590,12 @@ input[type="number"], button, select {
     align-items: flex-start;
 }
 .settings-item small {
-    line-height: 1.15;
-    margin-top: 4px;
+    line-height: 1.1;
+    margin-top: 1px;
+    margin-bottom: 0;
     display: block;
-    opacity: 0.6;
-    font-size: 0.85rem;
+    opacity: 0.7;
+    font-size: 0.8rem;
 }
 .columns-grid {
     display: grid;
@@ -545,32 +606,41 @@ input[type="number"], button, select {
     margin-bottom: 0 !important;
     display: flex;
     align-items: center;
-    gap: 6px;
+    gap: 8px;
     cursor: pointer;
     background: rgba(255, 255, 255, 0.03);
-    padding: 3px 6px;
-    border-radius: 4px;
+    padding: 6px 10px;
+    border-radius: 6px;
     transition: background 0.2s;
-    font-size: 0.85rem;
+    font-size: 0.9rem;
+}
+.column-checkbox-reversed {
+    justify-content: space-between;
 }
 .column-checkbox:hover {
     background: rgba(255, 255, 255, 0.08);
 }
 .column-checkbox input {
     margin-bottom: 0 !important;
-    width: 16px;
-    height: 16px;
+    width: 18px;
+    height: 18px;
+    cursor: pointer;
 }
 .settings-item input[type="number"], .settings-item select {
-    width: 140px;
-    padding: 4px 8px;
-    height: 32px;
+    width: 150px;
+    padding: 6px 10px;
+    height: 38px;
 }
 .settings-item input[type="text"] {
-    max-width: 320px;
+    max-width: 400px;
     width: 100%;
-    padding: 4px 8px;
-    height: 32px;
+    padding: 6px 10px;
+    height: 38px;
+}
+.settings-item input[role="switch"] {
+    width: 40px;
+    height: 20px;
+    margin-top: 4px;
 }
 .settings-item input, .settings-item select {
     margin-bottom: 0 !important;

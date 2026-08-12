@@ -7,74 +7,37 @@
 
 {% block content %}
 <form action="/settings" method="post" style="margin-bottom: 0;">
-    <div class="settings-main-grid">
+    <div class="settings-three-col-grid">
         <div class="settings-card">
             <div class="settings-group-title">
                 <span>⚙️</span> {{ i18n.monitoring_settings }}
             </div>
             <div class="settings-grid">
-                <div class="settings-item">
-                    <label for="idle_threshold">{{ i18n.idle_threshold }}</label>
-                    <div class="input-wrapper">
+                <div class="settings-grid-compact" style="grid-template-columns: 1fr;">
+                    <div class="settings-item-compact">
+                        <label for="idle_threshold">{{ i18n.idle_threshold }}</label>
                         <input type="number" id="idle_threshold" name="idle_threshold" value="{{ idle_threshold }}" min="5" required>
                         <small>{{ i18n.idle_threshold_desc }}</small>
                     </div>
-                </div>
 
-                <div class="settings-item">
-                    <label for="check_interval">{{ i18n.check_interval }}</label>
-                    <div class="input-wrapper">
+                    <div class="settings-item-compact">
+                        <label for="check_interval">{{ i18n.check_interval }}</label>
                         <input type="number" id="check_interval" name="check_interval" value="{{ check_interval }}" min="1" required>
                         <small>{{ i18n.check_interval_desc }}</small>
                     </div>
-                </div>
 
-                <div class="settings-item">
-                    <label for="flush_interval">{{ i18n.flush_interval }}</label>
-                    <div class="input-wrapper">
+                    <div class="settings-item-compact">
+                        <label for="flush_interval">{{ i18n.flush_interval }}</label>
                         <input type="number" id="flush_interval" name="flush_interval" value="{{ flush_interval }}" min="5" required>
                         <small>{{ i18n.flush_interval_desc }}</small>
                     </div>
-                </div>
 
-                <div class="settings-item">
-                    <label for="track_window_activity">{{ i18n.track_window_activity }}</label>
-                    <div class="input-wrapper" style="padding-top: 8px;">
-                        <input type="checkbox" id="track_window_activity" name="track_window_activity" role="switch" {% if track_window_activity %}checked{% endif %}>
-                        <small>{{ i18n.track_window_activity_desc }}</small>
-                    </div>
-                </div>
-
-                <div class="settings-item">
-                    <label for="language">{{ i18n.language }}</label>
-                    <div class="input-wrapper">
-                        <select id="language" name="language">
-                            <option value="ru" {% if language == "ru" %}selected{% endif %}>{{ i18n.lang_name_ru }}</option>
-                            <option value="en" {% if language == "en" %}selected{% endif %}>{{ i18n.lang_name_en }}</option>
-                        </select>
-                    </div>
-                </div>
-
-                <div class="settings-item">
-                    <label for="theme">{{ i18n.theme }}</label>
-                    <div class="input-wrapper">
-                        <select id="theme" name="theme">
-                            {% if theme == "light" %}
-                            <option value="light" selected>{{ i18n.theme_light }}</option>
-                            <option value="dark">{{ i18n.theme_dark }}</option>
-                            {% else %}
-                            <option value="light">{{ i18n.theme_light }}</option>
-                            <option value="dark" selected>{{ i18n.theme_dark }}</option>
-                            {% endif %}
-                        </select>
-                    </div>
-                </div>
-
-                <div class="settings-item">
-                    <label for="custom_title">{{ i18n.custom_title }}</label>
-                    <div class="input-wrapper">
-                        <input type="text" id="custom_title" name="custom_title" value="{{ custom_title }}" maxlength="50">
-                        <small>{{ i18n.custom_title_desc }}</small>
+                    <div style="margin-top: 4px;">
+                        <label class="column-checkbox column-checkbox-reversed">
+                            <span>{{ i18n.track_window_activity }}</span>
+                            <input type="checkbox" id="track_window_activity" name="track_window_activity" {% if track_window_activity %}checked{% endif %}>
+                        </label>
+                        <small style="margin-top: 0; font-size: 0.75rem; line-height: 1.2;">{{ i18n.track_window_activity_desc }}</small>
                     </div>
                 </div>
             </div>
@@ -84,7 +47,7 @@
             <div class="settings-group-title">
                 <span>📊</span> {{ i18n.visible_columns }}
             </div>
-            <div class="columns-grid">
+            <div class="columns-grid" style="grid-template-columns: 1fr;">
                 {% for col_id, col_name in all_columns %}
                 <label class="column-checkbox">
                     <input type="checkbox" name="visible_columns" value="{{ col_id }}" {% if col_id in visible_columns %}checked{% endif %}>
@@ -94,30 +57,67 @@
             </div>
         </div>
 
-        <div class="settings-card danger-zone" style="padding: 10px 15px;">
-            <div class="settings-group-title" style="margin-bottom: 6px;">
-                <span>⚠️</span> {{ i18n.service_control }}
+        <div class="settings-card">
+            <div class="settings-group-title">
+                <span>🎨</span> {{ i18n.interface_settings }}
             </div>
-            <div style="display: flex; justify-content: space-between; align-items: center; gap: 15px;">
-                <p style="font-size: 0.7rem; opacity: 0.8; margin-bottom: 0;">{{ i18n.shutdown_warning }}</p>
-                <div style="display: flex; gap: 8px;">
-                    {% if is_paused %}
-                    <button id="resume-btn" type="button" class="outline btn-compact" style="width: auto; margin-bottom: 0; white-space: nowrap;">▶ {{ i18n.resume_service }}</button>
-                    {% else %}
-                    <button id="pause-btn" type="button" class="outline btn-compact" style="width: auto; margin-bottom: 0; white-space: nowrap;">⏸ {{ i18n.stop_service }}</button>
-                    {% endif %}
-                    <button id="shutdown-btn" type="button" class="outline contrast btn-compact" style="width: auto; margin-bottom: 0; white-space: nowrap;">🛑 {{ i18n.shutdown_service }}</button>
+            <div class="settings-grid-compact">
+                <div class="settings-item-compact">
+                    <label for="language">{{ i18n.language }}</label>
+                    <select id="language" name="language">
+                        <option value="ru" {% if language == 'ru' %}selected{% endif %}>{{ i18n.lang_name_ru }}</option>
+                        <option value="en" {% if language == 'en' %}selected{% endif %}>{{ i18n.lang_name_en }}</option>
+                    </select>
+                </div>
+
+                <div class="settings-item-compact">
+                    <label for="theme">{{ i18n.theme }}</label>
+                    <select id="theme" name="theme">
+                        {% if theme == "light" %}
+                        <option value="light" selected>{{ i18n.theme_light }}</option>
+                        <option value="dark">{{ i18n.theme_dark }}</option>
+                        {% else %}
+                        <option value="light">{{ i18n.theme_light }}</option>
+                        <option value="dark" selected>{{ i18n.theme_dark }}</option>
+                        {% endif %}
+                    </select>
+                </div>
+
+                <div class="settings-item-compact">
+                    <label for="custom_title">{{ i18n.custom_title }}</label>
+                    <input type="text" id="custom_title" name="custom_title" value="{{ custom_title }}" maxlength="50" placeholder="{{ i18n.custom_title }}">
+                    <small>{{ i18n.custom_title_desc }}</small>
                 </div>
             </div>
         </div>
     </div>
 
-    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
-        <button type="button" class="outline secondary btn-compact" style="width: auto; margin-bottom: 0;"
-                onclick="if(confirm('{{ i18n.confirm_reset }}')) { document.getElementById('reset-form').submit(); }">
-            {{ i18n.reset_defaults }}
-        </button>
-        <button type="submit" class="btn-compact" style="width: auto; margin-bottom: 0; padding-left: 2rem; padding-right: 2rem;">{{ i18n.save_changes }}</button>
+    <div class="settings-card danger-zone" style="margin-top: 15px;">
+        <div class="settings-group-title" style="margin-bottom: 0;">
+            <span>⚠️</span> {{ i18n.service_control }}
+        </div>
+        <div style="display: flex; flex-direction: column; gap: 10px;">
+            <p style="font-size: 0.85rem; opacity: 0.8; margin-bottom: 0;">{{ i18n.shutdown_warning }}</p>
+            <div style="display: flex; gap: 10px; flex-wrap: wrap; align-items: center; justify-content: space-between;">
+                <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+                    <button id="shutdown-btn" type="button" class="outline contrast btn-compact" style="width: auto; margin-bottom: 0; white-space: nowrap;">🛑 {{ i18n.shutdown_service }}</button>
+                    
+                    {% if is_paused %}
+                    <button id="resume-btn" type="button" class="outline btn-compact" style="width: auto; margin-bottom: 0; white-space: nowrap;">▶ {{ i18n.resume_service }}</button>
+                    {% else %}
+                    <button id="pause-btn" type="button" class="outline btn-compact" style="width: auto; margin-bottom: 0; white-space: nowrap;">⏸ {{ i18n.stop_service }}</button>
+                    {% endif %}
+                </div>
+
+                <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+                    <button type="button" class="outline secondary btn-compact" style="width: auto; margin-bottom: 0;"
+                            onclick="if(confirm('{{ i18n.confirm_reset }}')) { document.getElementById('reset-form').submit(); }">
+                        {{ i18n.reset_defaults }}
+                    </button>
+                    <button type="submit" class="btn-compact" style="width: auto; margin-bottom: 0; padding-left: 2rem; padding-right: 2rem;">{{ i18n.save_changes }}</button>
+                </div>
+            </div>
+        </div>
     </div>
 </form>
 

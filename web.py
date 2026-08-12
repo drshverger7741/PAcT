@@ -212,6 +212,18 @@ async def update_interval_comment_endpoint(interval_id: int, comment: str = Form
     await db.update_interval_comment(interval_id, comment)
     return HTMLResponse(comment)
 
+@app.post("/api/month_comment/{year_month}")
+async def update_month_comment_endpoint(year_month: str, comment: str = Form("")):
+    comment = comment.strip()
+    await db.update_month_comment(year_month, comment)
+    return HTMLResponse(comment)
+
+@app.post("/api/week_comment/{year_week}")
+async def update_week_comment_endpoint(year_week: str, comment: str = Form("")):
+    comment = comment.strip()
+    await db.update_week_comment(year_week, comment)
+    return HTMLResponse(comment)
+
 @app.get("/api/stats", response_class=HTMLResponse)
 async def get_stats(request: Request):
     language = await db.get_setting("language", "ru")

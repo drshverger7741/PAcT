@@ -38,8 +38,11 @@ def get_month_name(month_idx: int, lang="ru") -> str:
     return i18n["months_full"][month_idx-1]
 
 async def group_stats(stats: List[Dict], lang="ru"):
+    import db
     # Группировка по году и месяцу
     grouped = {}
+    month_comments = await db.get_month_comments()
+    week_comments = await db.get_week_comments()
     for s in stats:
         dt = date.fromisoformat(s['date'])
         year = dt.year
@@ -98,7 +101,9 @@ async def group_stats(stats: List[Dict], lang="ru"):
                             "days": current_week, 
                             "total": week_total,
                             "start_date": current_week[-1]['date'],
-                            "end_date": current_week[0]['date']
+                            "end_date": current_week[0]['date'],
+                            "year_week": f"{s_dt.year}-{cw_num}",
+                            "comment": week_comments.get(f"{s_dt.year}-{cw_num}", "")
                         })
                         current_week = []
                         cw_num = s_cw
@@ -119,7 +124,9 @@ async def group_stats(stats: List[Dict], lang="ru"):
                         "days": current_week, 
                         "total": week_total,
                         "start_date": current_week[-1]['date'],
-                        "end_date": current_week[0]['date']
+                        "end_date": current_week[0]['date'],
+                        "year_week": f"{first_dt.year}-{cw_num}",
+                        "comment": week_comments.get(f"{first_dt.year}-{cw_num}", "")
                     })
 
             result.append({
@@ -129,6 +136,8 @@ async def group_stats(stats: List[Dict], lang="ru"):
                 "total": month_total,
                 "weeks": weeks,
                 "start_date": month_start,
-                "end_date": month_end
+                "end_date": month_end,
+                "year_month": f"{year}-{month:02d}",
+                "comment": month_comments.get(f"{year}-{month:02d}", "")
             })
     return result

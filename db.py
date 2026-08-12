@@ -46,6 +46,18 @@ async def init_db():
             )
         """)
         await db.execute("""
+            CREATE TABLE IF NOT EXISTS month_comments (
+                year_month TEXT PRIMARY KEY,
+                comment TEXT
+            )
+        """)
+        await db.execute("""
+            CREATE TABLE IF NOT EXISTS week_comments (
+                year_week TEXT PRIMARY KEY,
+                comment TEXT
+            )
+        """)
+        await db.execute("""
             CREATE TABLE IF NOT EXISTS window_activity (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
                 date TEXT,
@@ -183,6 +195,32 @@ async def update_interval_comment(interval_id: int, comment: str):
     async with aiosqlite.connect(DB_PATH) as db:
         await db.execute("UPDATE activity_log SET comment = ? WHERE id = ?", (comment, interval_id))
         await db.commit()
+
+async def update_month_comment(year_month: str, comment: str):
+    """Обновление комментария к месяцу (формат YYYY-MM)."""
+    async with aiosqlite.connect(DB_PATH) as db:
+        await db.execute("INSERT OR REPLACE INTO month_comments (year_month, comment) VALUES (?, ?)", (year_month, comment))
+        await db.commit()
+
+async def update_week_comment(year_week: str, comment: str):
+    """Обновление комментария к неделе (формат YYYY-WW)."""
+    async with aiosqlite.connect(DB_PATH) as db:
+        await db.execute("INSERT OR REPLACE INTO week_comments (year_week, comment) VALUES (?, ?)", (year_week, comment))
+        await db.commit()
+
+async def get_month_comments() -> Dict[str, str]:
+    """Получение всех комментариев к месяцам."""
+    async with aiosqlite.connect(DB_PATH) as db:
+        async with db.execute("SELECT year_month, comment FROM month_comments") as cursor:
+            rows = await cursor.fetchall()
+            return {row[0]: row[1] for row in rows}
+
+async def get_week_comments() -> Dict[str, str]:
+    """Получение всех комментариев к неделям."""
+    async with aiosqlite.connect(DB_PATH) as db:
+        async with db.execute("SELECT year_week, comment FROM week_comments") as cursor:
+            rows = await cursor.fetchall()
+            return {row[0]: row[1] for row in rows}
 
 async def add_window_activity(date_str: str, title: str, app: str, start: str, end: str, duration: float):
     """Добавление записи об активности окна."""

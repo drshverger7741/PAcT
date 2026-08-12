@@ -1,28 +1,20 @@
-<div style="padding-left: 20px;">
+<div style="padding-left: 20px; padding-top: 4px;">
     {% if current_interval %}
-    <div style="margin-bottom: 20px; padding: 10px; border: 2px solid var(--primary); border-radius: 8px; background: #1a1d23;">
-        <h6 style="margin-bottom: 5px; color: var(--primary);">{{ i18n.current_activity }}</h6>
+    <div style="margin-bottom: 0; padding: 10px; border: 2px solid var(--primary); border-top-left-radius: 8px; border-top-right-radius: 8px; background: #1a1d23;">
+        <h6 style="margin-bottom: 2px; color: var(--primary);">{{ i18n.current_activity }}</h6>
         <table role="grid" style="margin-bottom: 0; table-layout: fixed; width: 100%;">
             <tbody>
                 <tr>
-                    <td style="width: 30%;">{{ current_interval.start_time }} - {{ i18n.now }}</td>
-                    <td style="width: 30%;" class="state-{{ current_interval.state }}">{{ current_interval.state_ru }}</td>
-                    <td style="width: 40%;">({{ i18n.collecting_data }})</td>
+                    <td style="width: 30%; padding-top: 4px; padding-bottom: 4px;">{{ current_interval.start_time }} - {{ i18n.now }}</td>
+                    <td style="width: 30%; padding-top: 4px; padding-bottom: 4px;" class="state-{{ current_interval.state }}">{{ current_interval.state_ru }}</td>
+                    <td style="width: 40%; padding-top: 4px; padding-bottom: 4px;">({{ i18n.collecting_data }})</td>
                 </tr>
             </tbody>
         </table>
     </div>
     {% endif %}
-
     {% if log %}
-    <table role="grid" style="table-layout: fixed; width: 100%;">
-        <thead>
-            <tr>
-                <th style="width: 30%;">{{ i18n.time }}</th>
-                <th style="width: 30%;">{{ i18n.state }}</th>
-                <th style="width: 40%;">{{ i18n.comment }}</th>
-            </tr>
-        </thead>
+    <table role="grid" style="table-layout: fixed; width: 100%; margin-top: 0; {% if current_interval %}border-top: none; border-top-left-radius: 0; border-top-right-radius: 0; margin-top: -1px;{% endif %}">
         <tbody>
             {% for entry in log %}
             <tr>
@@ -38,7 +30,7 @@
         </tbody>
     </table>
     {% elif not current_interval %}
-    <table role="grid" style="table-layout: fixed; width: 100%;">
+    <table role="grid" style="table-layout: fixed; width: 100%; margin-top: 0;">
         <tbody>
             <tr>
                 <td>{{ i18n.no_intervals }}</td>

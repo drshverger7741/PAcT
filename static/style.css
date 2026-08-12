@@ -104,7 +104,7 @@ details[open] > summary {
 }
 details details summary {
     background: var(--summary-inner, #3a3f4b);
-    margin-left: 20px;
+    margin-left: 15px;
     border-radius: 6px;
 }
 details details[open] > summary {
@@ -115,24 +115,30 @@ details details[open] > summary {
     color: var(--text-muted);
     margin-left: 10px;
 }
-.week-summary, .day-summary {
+.month-summary, .week-summary, .day-summary {
     background: var(--summary-group, #262930) !important;
-    padding: 1px 15px 1px 35px !important;
+    padding: 1px 12px 1px 30px !important;
     font-weight: bold;
-    font-size: 0.9em;
+    font-size: 0.85em !important;
     color: #1095c1;
-    border-left: 4px solid #1095c1;
-    margin: 1px 0 1px 20px !important;
+    border-left: 3px solid #1095c1;
+    margin: 1px 0 1px 15px !important;
     border-radius: 0 4px 4px 0 !important;
 }
-.week-summary::before, .day-summary::before {
+
+.month-summary {
+    margin-left: 0 !important;
+    background: var(--summary-bg) !important;
+    border-left: 4px solid var(--primary) !important;
+}
+.month-summary::before, .week-summary::before, .day-summary::before {
     left: 10px !important;
 }
-details[open] > .week-summary, details[open] > .day-summary {
+details[open] > .month-summary, details[open] > .week-summary, details[open] > .day-summary {
     margin-bottom: 0 !important;
 }
 .day-row {
-    margin-left: 20px;
+    margin-left: 15px;
 }
 .day-row > details {
     border: none;
@@ -358,18 +364,48 @@ dialog article {
     font-weight: bold;
     color: #4caf50;
 }
+
+.stats-grid-container {
+    display: flex;
+    gap: 0;
+    font-size: 0.85em;
+    color: var(--text-muted);
+    justify-content: flex-end;
+    align-items: center;
+    overflow: hidden;
+    min-width: 0;
+}
+
+.stats-grid-item {
+    flex: 0 0 120px;
+    text-align: right;
+    white-space: nowrap;
+    border-right: 1px solid var(--border-extra-light);
+    padding: 0 6px;
+}
+
+.stats-grid-item:last-child {
+    border-right: none;
+}
+
+.stats-grid-item-label {
+    font-weight: bold;
+    margin-right: 4px;
+    color: var(--text-muted-more);
+}
+
 .comment-text {
     cursor: pointer;
     border-bottom: 1px dashed var(--text-muted);
     display: inline-block;
-    min-height: 1.5em;
-    min-width: 120px;
-    padding: 4px 10px;
+    min-height: 1.4em;
+    min-width: 200px;
+    padding: 2px 8px;
     background: var(--bg-light);
     border-radius: 4px;
     vertical-align: middle;
     position: relative;
-    font-size: 0.9em;
+    font-size: 0.85em;
     transition: background 0.2s, border-color 0.2s;
 }
 .comment-text:hover {

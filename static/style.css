@@ -184,6 +184,17 @@ table[role="grid"] th, table[role="grid"] td {
     color: var(--primary);
 }
 
+/* Tooltip larger size */
+[data-tooltip]::before,
+[data-tooltip]::after {
+    font-size: 1.1rem !important;
+}
+[data-tooltip]::after {
+    padding: 0.5rem 1rem !important;
+    width: auto !important;
+    white-space: nowrap !important;
+}
+
 /* Main container width */
 main.container {
     max-width: 1400px;

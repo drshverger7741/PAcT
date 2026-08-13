@@ -2,7 +2,7 @@ import aiosqlite
 import os
 import sys
 from datetime import date
-from typing import List, Dict, Any
+from typing import List, Dict, Any, Optional
 
 def get_db_path() -> str:
     """Возвращает путь к папке приложения."""
@@ -158,7 +158,7 @@ async def get_all_stats() -> List[Dict[str, Any]]:
             rows = await cursor.fetchall()
             return [dict(row) for row in rows]
 
-async def add_activity_interval(date_str: str, start_time: str, end_time: str, state: str):
+async def add_activity_interval(date_str: str, start_time: str, end_time: Optional[str], state: str):
     """Добавление интервала активности."""
     async with aiosqlite.connect(DB_PATH) as db:
         await db.execute(
@@ -179,7 +179,9 @@ async def get_last_activity() -> Dict[str, Any]:
     """Получение последней записи из лога активности."""
     async with aiosqlite.connect(DB_PATH) as db:
         db.row_factory = aiosqlite.Row
-        async with db.execute("SELECT * FROM activity_log ORDER BY date DESC, end_time DESC LIMIT 1") as cursor:
+        # Для определения времени последнего выхода нам нужны записи, где есть end_time.
+        # Startup/Shutdown записи (теперь без end_time) используются для меток.
+        async with db.execute("SELECT * FROM activity_log WHERE end_time IS NOT NULL ORDER BY date DESC, end_time DESC LIMIT 1") as cursor:
             row = await cursor.fetchone()
             return dict(row) if row else None
 

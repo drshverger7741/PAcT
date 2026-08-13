@@ -115,6 +115,11 @@ class ActivityTracker:
 
     async def log_interval(self, state, start_time, end_time):
         """Логирует интервал в БД."""
+        if state in ["startup", "shutdown"]:
+            # Системные события логируются как точки во времени (без end_time)
+            st = datetime.fromtimestamp(start_time).strftime("%H:%M:%S")
+            await self.db.add_activity_interval(self.today, st, None, state)
+            return
         d = datetime.fromtimestamp(start_time).date().isoformat()
         st = datetime.fromtimestamp(start_time).strftime("%H:%M:%S")
         et = datetime.fromtimestamp(end_time).strftime("%H:%M:%S")
@@ -175,30 +180,17 @@ class ActivityTracker:
             self.current_state = "idle"
         else:
             self.current_state = "active"
+            
+        # Записываем событие "Включен" при старте приложения
+        now = time.time()
+        await self.log_interval("startup", now, None)
+        self.last_state_change_time = now
 
         # Запуск потока для WinAPI сообщений
         threading.Thread(target=self._create_message_window, daemon=True).start()
 
-        # Определение времени выключения (разрыв между текущим стартом и последней записью)
-        last_activity = await self.db.get_last_activity()
-        if last_activity:
-            try:
-                last_dt = datetime.fromisoformat(f"{last_activity['date']}T{last_activity['end_time']}")
-                now_dt = datetime.now()
-                if (now_dt - last_dt).total_seconds() > self.idle_threshold:
-                    # Если разрыв больше порога, записываем как shutdown
-                    d_str = last_activity['date']
-                    st_str = last_activity['end_time']
-                    et_str = now_dt.strftime("%H:%M:%S")
-                    # Записываем Shutdown с конца последней активности до текущего момента
-                    await self.db.add_activity_interval(now_dt.date().isoformat(), st_str, et_str, "shutdown")
-                    
-                    # Также обновляем daily_stats, чтобы учесть время shutdown
-                    shutdown_duration = (now_dt - last_dt).total_seconds()
-                    await self.db.upsert_daily_stats(now_dt.date().isoformat(), {"shutdown": shutdown_duration})
-            except Exception as e:
-                logger.error(f"Error calculating startup/shutdown gap: {e}")
-
+        # Определение времени выключения (разрыв между текущим стартом и последней записью) - УДАЛЕНО по требованию (Gap Detection)
+        
         sleep_start_time = None
 
         while self.running:
@@ -239,9 +231,15 @@ class ActivityTracker:
                             with self._lock:
                                 self.stats["sleep"] += delta
                             sleep_start_time = None
-                        await self.change_state("active")
+                        
+                        # Точка пробуждения
+                        now = time.time()
+                        
+                        # Переходим в active ровно с момента пробуждения
+                        await self.change_state("active", override_time=now)
+                        
                         # Обновляем last_tick_time, чтобы delta после сна не включала время сна
-                        self.last_tick_time = time.time()
+                        self.last_tick_time = now
                     elif event[0] == "shutdown":
                         event_time = event[1]
                         await self.change_state("shutdown", override_time=event_time)
@@ -350,7 +348,10 @@ class ActivityTracker:
     async def stop(self):
         self.running = False
         now = time.time()
+        
         await self.log_interval(self.current_state, self.last_state_change_time, now)
+        # Записываем событие "Выключен" при завершении программы
+        await self.log_interval("shutdown", now, None)
         await self.flush_to_db()
 
     def pause(self):
@@ -362,7 +363,10 @@ class ActivityTracker:
 
     async def _handle_pause_stop(self):
         now = time.time()
+        
         await self.log_interval(self.current_state, self.last_state_change_time, now)
+        # Записываем событие "Выключен" при ручной паузе
+        await self.log_interval("shutdown", now, None)
         
         if self.track_window_activity and self.current_window["start_time"] > 0:
             st_str = datetime.fromtimestamp(self.current_window["start_time"]).strftime("%H:%M:%S")
@@ -378,5 +382,10 @@ class ActivityTracker:
     def resume(self):
         if self.paused:
             self.paused = False
-            self.last_tick_time = time.time()
+            now = time.time()
+            self.last_tick_time = now
             logging.info("Monitoring resumed")
+            # Записываем событие "Включен" при ручном возобновлении
+            asyncio.run_coroutine_threadsafe(self.log_interval("startup", now, None), asyncio.get_event_loop())
+            # Сбрасываем время начала интервала, чтобы он начался с момента resume
+            self.last_state_change_time = now

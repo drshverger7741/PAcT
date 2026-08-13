@@ -18,12 +18,18 @@
         <tbody>
             {% for entry in log %}
             <tr>
-                <td style="width: 30%;">{{ entry.start_time }} - {{ entry.end_time }}</td>
+                <td style="width: 30%;">
+                    {% if entry.state in ['shutdown', 'startup'] %}
+                        {{ entry.start_time }}
+                    {% else %}
+                        {{ entry.start_time }} - {{ entry.end_time }}
+                    {% endif %}
+                </td>
                 <td style="width: 30%;" class="{{ entry.state_class }}">{{ entry.state_ru }}</td>
                 <td style="width: 40%;">
                     <div id="comment-int-{{ entry.id }}" 
                          class="comment-text"
-                         onclick="openModal('{{ i18n.interval_comment_title }}', '{{ entry.start_time }} - {{ entry.end_time }} ({{ entry.state_ru }})', '/api/interval_comment/{{ entry.id }}', 'comment-int-{{ entry.id }}', this.textContent.trim())">{{ entry.comment or '' }}</div>
+                         onclick="openModal('{{ i18n.interval_comment_title }}', '{{ entry.start_time }}{% if entry.end_time %} - {{ entry.end_time }}{% endif %} ({{ entry.state_ru }})', '/api/interval_comment/{{ entry.id }}', 'comment-int-{{ entry.id }}', this.textContent.trim())">{{ entry.comment or '' }}</div>
                 </td>
             </tr>
             {% endfor %}

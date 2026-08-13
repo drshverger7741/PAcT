@@ -171,7 +171,8 @@ table[role="grid"] th, table[role="grid"] td {
 }
 .state-active { color: #4caf50; }
 .state-idle { color: #ffeb3b; }
-.state-locked, .state-sleep, .state-no_session { color: #f44336; }
+.state-locked, .state-sleep, .state-no_session, .state-shutdown { color: #f44336; }
+.state-startup { color: #4caf50; }
 
 .stats-icon {
     cursor: pointer;

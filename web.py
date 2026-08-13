@@ -178,6 +178,7 @@ async def get_day_details(request: Request, day_date: str):
         "locked": i18n["locked"],
         "no_session": i18n["no_session"],
         "sleep": i18n["sleep"],
+        "startup": i18n.get("startup", "Startup"),
         "shutdown": i18n["shutdown"],
         "unknown": i18n["unknown"]
     }
@@ -267,6 +268,7 @@ async def get_state(request: Request):
         "locked": i18n["locked"],
         "no_session": i18n["no_session"],
         "sleep": i18n["sleep"],
+        "startup": i18n.get("startup", "Startup"),
         "shutdown": i18n["shutdown"],
         "unknown": i18n["unknown"]
     }

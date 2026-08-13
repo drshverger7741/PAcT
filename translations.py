@@ -73,6 +73,7 @@ TRANSLATIONS = {
         "theme_auto": "Системная",
         "interface_settings": "Тема и язык",
         "hour_short": "ч",
+        "sec_short": "с",
         "track_window_activity": "Сбор активности приложений",
         "track_window_activity_desc": "Записывать, какие окна и приложения использовались",
         "window_stats": "Статистика активностей",
@@ -83,8 +84,10 @@ TRANSLATIONS = {
         "details": "Детализация",
         "tab_overview": "Обзор",
         "tab_timeline": "Лог активности",
+        "refresh": "Обновить",
         "filter_placeholder": "Фильтр по названию или приложению...",
         "date": "Дата",
+        "total_count": "Всего: {count}",
         "months": [
             "января", "февраля", "марта", "апреля", "мая", "июня",
             "июля", "августа", "сентября", "октября", "ноября", "декабря"
@@ -169,6 +172,7 @@ TRANSLATIONS = {
         "theme_auto": "System",
         "interface_settings": "Theme & Language",
         "hour_short": "h",
+        "sec_short": "s",
         "track_window_activity": "Track App Activity",
         "track_window_activity_desc": "Record which windows and applications were used",
         "window_stats": "Activity statistics",
@@ -179,8 +183,10 @@ TRANSLATIONS = {
         "details": "Details",
         "tab_overview": "Overview",
         "tab_timeline": "Activity Log",
+        "refresh": "Refresh",
         "filter_placeholder": "Filter by title or app...",
         "date": "Date",
+        "total_count": "Total: {count}",
         "months": [
             "January", "February", "March", "April", "May", "June",
             "July", "August", "September", "October", "November", "December"

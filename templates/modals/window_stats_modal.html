@@ -46,9 +46,10 @@
 
         <!-- Tab 2: Timeline -->
         <div id="tab-timeline" class="tab-content">
-            <div class="filter-bar">
-                <input type="text" id="timeline-filter" class="filter-input" placeholder="{{ i18n.filter_placeholder }}" oninput="filterTimeline()">
-                <span id="timeline-count" style="font-size: 1rem; color: var(--text-muted-more); margin-left: auto;"></span>
+            <div class="filter-bar" style="display: flex; align-items: center; gap: 10px; margin-bottom: 10px;">
+                <input type="text" id="timeline-filter" class="filter-input" style="margin-bottom: 0;" placeholder="{{ i18n.filter_placeholder }}" oninput="filterTimeline()">
+                <button class="outline" style="margin-bottom: 0; padding: 5px 15px; width: auto;" onclick="refreshWindowStats()">{{ i18n.refresh }}</button>
+                <div id="timeline-count" class="count-badge" style="margin-left: auto;"></div>
             </div>
             <div class="timeline-table-container">
                 <table role="grid" class="timeline-table" style="width: 100%;">

@@ -29,6 +29,7 @@ document.addEventListener('keydown', (e) => {
 
 let windowChart = null;
 let fullTimelineData = [];
+let currentStatsParams = { title: '', start: '', end: '' };
 
 function switchTab(tabId) {
     document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
@@ -40,18 +41,11 @@ function switchTab(tabId) {
     document.getElementById(`tab-${tabId}`).classList.add('active');
 }
 
-async function openWindowStats(title, startDate, endDate) {
-    document.getElementById('window-stats-title').innerText = title;
-    document.getElementById('window-stats-modal').setAttribute('open', 'true');
+async function refreshWindowStats() {
+    const { start, end } = currentStatsParams;
+    if (!start) return;
     
-    // Reset to first tab
-    const firstTab = document.querySelector('.tab-btn');
-    if (firstTab) firstTab.click();
-    
-    const filterInput = document.getElementById('timeline-filter');
-    if (filterInput) filterInput.value = '';
-    
-    const response = await fetch(`/api/window_stats?start=${startDate}&end=${endDate}`);
+    const response = await fetch(`/api/window_stats?start=${start}&end=${end}`);
     const data = await response.json();
     
     fullTimelineData = data.timeline || [];
@@ -73,7 +67,7 @@ async function openWindowStats(title, startDate, endDate) {
     }
     
     // Timeline Table
-    renderTimeline(fullTimelineData);
+    filterTimeline(); // Use current filter
     
     // Chart
     const chartCanvas = document.getElementById('window-stats-chart');
@@ -111,6 +105,21 @@ async function openWindowStats(title, startDate, endDate) {
     }
 }
 
+async function openWindowStats(title, startDate, endDate) {
+    currentStatsParams = { title, start: startDate, end: endDate };
+    document.getElementById('window-stats-title').innerText = title;
+    document.getElementById('window-stats-modal').setAttribute('open', 'true');
+    
+    // Reset to first tab
+    const firstTab = document.querySelector('.tab-btn');
+    if (firstTab) firstTab.click();
+    
+    const filterInput = document.getElementById('timeline-filter');
+    if (filterInput) filterInput.value = '';
+    
+    await refreshWindowStats();
+}
+
 function renderTimeline(data) {
     const tbody = document.getElementById('window-timeline-table-body');
     if (tbody) {
@@ -125,13 +134,13 @@ function renderTimeline(data) {
                         <span title="${row.window_title}">${row.window_title}</span>
                     </div>
                 </td>
-                <td class="duration-text" style="text-align: right;">${row.duration.toFixed(0)}s</td>
+                <td class="duration-text" style="text-align: right;">${row.duration.toFixed(0)}${CONFIG.secShort}</td>
             </tr>
         `).join('');
     }
     const countSpan = document.getElementById('timeline-count');
     if (countSpan) {
-        countSpan.innerText = `Total: ${data.length}`;
+        countSpan.innerText = CONFIG.totalCountTpl.replace('{count}', data.length);
     }
 }
 

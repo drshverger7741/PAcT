@@ -3,6 +3,7 @@ from fastapi.responses import HTMLResponse, RedirectResponse, JSONResponse
 from fastapi.templating import Jinja2Templates
 from fastapi.staticfiles import StaticFiles
 import locale
+import time
 from datetime import date, datetime
 from typing import List
 import utils
@@ -260,6 +261,17 @@ async def get_state(request: Request):
         "unknown": i18n["unknown"]
     }
     text = state_map.get(state, state)
+    
+    if state == "idle" and tracker:
+        idle_duration = int(time.time() - tracker.last_state_change_time)
+        h = idle_duration // 3600
+        m = (idle_duration % 3600) // 60
+        s = idle_duration % 60
+        if h > 0:
+            time_str = f"{h:02}:{m:02}:{s:02}"
+        else:
+            time_str = f"{m:02}:{s:02}"
+        text = f"{text} ({time_str})"
     
     if tracker and tracker.paused:
         text = f"{text} ({i18n.get('paused', 'Paused')})"

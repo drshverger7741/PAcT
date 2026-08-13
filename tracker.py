@@ -13,6 +13,7 @@ class ActivityTracker:
         self.db = db_module
         self.current_state = "unknown"
         self.idle_threshold = 300.0
+        self.activity_grace_period = 5.0
         self.check_interval = 10.0
         self.flush_interval = 60.0
         self.app_name = "PAcT"
@@ -35,6 +36,7 @@ class ActivityTracker:
         self._lock = threading.Lock()
         self.today = date.today().isoformat()
         self.track_window_activity = True
+        self.first_activity_time = 0.0
         
         # Window tracking
         self.current_window = {"title": "", "app": "", "start_time": 0.0}
@@ -91,6 +93,8 @@ class ActivityTracker:
                 self.event_queue.put_nowait(("sleep_start", time.time(), self.get_idle_time()))
             elif wparam == winapi.PBT_APMRESUMESUSPEND:
                 self.event_queue.put_nowait(("sleep_end", time.time()))
+        elif msg in [winapi.WM_QUERYENDSESSION, winapi.WM_ENDSESSION]:
+            self.event_queue.put_nowait(("shutdown", time.time()))
         return winapi.user32.DefWindowProcW(hwnd, msg, wparam, lparam)
 
     def _create_message_window(self):
@@ -126,6 +130,8 @@ class ActivityTracker:
         await self.flush_to_db()
         self.current_state = new_state
         self.last_state_change_time = transition_time
+        if new_state != "active":
+            self.first_activity_time = 0.0
 
     async def flush_to_db(self):
         if self.is_flushing:
@@ -158,6 +164,7 @@ class ActivityTracker:
         
         # Загрузка настроек
         self.idle_threshold = float(await self.db.get_setting("idle_threshold", "300"))
+        self.activity_grace_period = float(await self.db.get_setting("activity_grace_period", "5"))
         self.check_interval = float(await self.db.get_setting("check_interval", "10"))
         self.flush_interval = float(await self.db.get_setting("flush_interval", "60"))
         self.track_window_activity = (await self.db.get_setting("track_window_activity", "true")).lower() == "true"
@@ -173,15 +180,24 @@ class ActivityTracker:
         threading.Thread(target=self._create_message_window, daemon=True).start()
 
         # Определение времени выключения (разрыв между текущим стартом и последней записью)
-        # В данной реализации мы просто сбрасываем состояние при старте.
-        # Точный расчет выключения требует чтения последней записи из БД.
-        all_stats = await self.db.get_all_stats()
-        if all_stats:
-            last_date_str = all_stats[0]['date']
-            if last_date_str == self.today:
-                # Если сегодня уже были записи, мы не можем легко определить shutdown_seconds 
-                # без хранения времени последней активности. Для простоты пропустим этот шаг.
-                pass
+        last_activity = await self.db.get_last_activity()
+        if last_activity:
+            try:
+                last_dt = datetime.fromisoformat(f"{last_activity['date']}T{last_activity['end_time']}")
+                now_dt = datetime.now()
+                if (now_dt - last_dt).total_seconds() > self.idle_threshold:
+                    # Если разрыв больше порога, записываем как shutdown
+                    d_str = last_activity['date']
+                    st_str = last_activity['end_time']
+                    et_str = now_dt.strftime("%H:%M:%S")
+                    # Записываем Shutdown с конца последней активности до текущего момента
+                    await self.db.add_activity_interval(now_dt.date().isoformat(), st_str, et_str, "shutdown")
+                    
+                    # Также обновляем daily_stats, чтобы учесть время shutdown
+                    shutdown_duration = (now_dt - last_dt).total_seconds()
+                    await self.db.upsert_daily_stats(now_dt.date().isoformat(), {"shutdown": shutdown_duration})
+            except Exception as e:
+                logger.error(f"Error calculating startup/shutdown gap: {e}")
 
         sleep_start_time = None
 
@@ -226,6 +242,9 @@ class ActivityTracker:
                         await self.change_state("active")
                         # Обновляем last_tick_time, чтобы delta после сна не включала время сна
                         self.last_tick_time = time.time()
+                    elif event[0] == "shutdown":
+                        event_time = event[1]
+                        await self.change_state("shutdown", override_time=event_time)
                 except asyncio.TimeoutError:
                     pass
 
@@ -269,7 +288,23 @@ class ActivityTracker:
                                     self.window_buffer.append((self.current_window["title"], self.current_window["app"], st_str, et_str, dur))
                                 self.current_window = {"title": "", "app": "", "start_time": 0.0}
                     else:
-                        await self.change_state("active")
+                        if self.current_state == "idle":
+                            # Мы зафиксировали активность (idle_time < threshold)
+                            if self.first_activity_time == 0.0:
+                                self.first_activity_time = now - idle_time
+                            
+                            active_duration = now - self.first_activity_time
+                            if active_duration < self.activity_grace_period:
+                                # Игнорируем микро-активность: продолжаем считать это простоем
+                                # Мы не вызываем change_state, поэтому остаемся в idle.
+                                # Но нам нужно добавить дельту времени к idle в stats.
+                                pass
+                            else:
+                                # Подтверждено: пользователь действительно вернулся
+                                # Переходим в active с момента первой активности
+                                await self.change_state("active", override_time=self.first_activity_time)
+                        else:
+                            await self.change_state("active")
                         
                         # Мониторинг окон только в активном состоянии
                         if self.track_window_activity:

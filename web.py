@@ -66,8 +66,9 @@ async def settings_page(request: Request):
     language = await db.get_setting("language", "ru")
     theme = await db.get_setting("theme", "dark")
     i18n = utils.get_i18n(language)
-    idle_threshold = await db.get_setting("idle_threshold", "60")
-    check_interval = await db.get_setting("check_interval", "5")
+    idle_threshold = await db.get_setting("idle_threshold", "300")
+    activity_grace_period = await db.get_setting("activity_grace_period", "5")
+    check_interval = await db.get_setting("check_interval", "10")
     flush_interval = await db.get_setting("flush_interval", "30")
     custom_title = await db.get_setting("custom_title", "PAcT")
     track_window_activity = (await db.get_setting("track_window_activity", "true")).lower() == "true"
@@ -85,6 +86,7 @@ async def settings_page(request: Request):
         name="settings.html",
         context={
             "idle_threshold": idle_threshold,
+            "activity_grace_period": activity_grace_period,
             "check_interval": check_interval,
             "flush_interval": flush_interval,
             "track_window_activity": track_window_activity,
@@ -102,6 +104,7 @@ async def settings_page(request: Request):
 async def save_settings(
     request: Request,
     idle_threshold: str = Form(...),
+    activity_grace_period: str = Form(...),
     check_interval: str = Form(...),
     flush_interval: str = Form(...),
     track_window_activity: bool = Form(False),
@@ -111,6 +114,7 @@ async def save_settings(
     visible_columns: List[str] = Form([])
 ):
     await db.set_setting("idle_threshold", idle_threshold)
+    await db.set_setting("activity_grace_period", activity_grace_period)
     await db.set_setting("check_interval", check_interval)
     await db.set_setting("flush_interval", flush_interval)
     await db.set_setting("track_window_activity", "true" if track_window_activity else "false")
@@ -122,6 +126,7 @@ async def save_settings(
     if tracker:
         try:
             tracker.idle_threshold = float(idle_threshold)
+            tracker.activity_grace_period = float(activity_grace_period)
             tracker.check_interval = float(check_interval)
             tracker.flush_interval = float(flush_interval)
             tracker.track_window_activity = track_window_activity
@@ -132,6 +137,7 @@ async def save_settings(
 @app.post("/api/settings/reset")
 async def reset_settings():
     default_idle = "300"
+    default_grace = "5"
     default_check = "10"
     default_flush = "60"
     default_track = "true"
@@ -141,6 +147,7 @@ async def reset_settings():
     default_columns = "active_seconds,idle_seconds,locked_seconds,sleep_seconds"
     
     await db.set_setting("idle_threshold", default_idle)
+    await db.set_setting("activity_grace_period", default_grace)
     await db.set_setting("check_interval", default_check)
     await db.set_setting("flush_interval", default_flush)
     await db.set_setting("track_window_activity", default_track)
@@ -151,6 +158,7 @@ async def reset_settings():
     
     if tracker:
         tracker.idle_threshold = float(default_idle)
+        tracker.activity_grace_period = float(default_grace)
         tracker.check_interval = float(default_check)
         tracker.flush_interval = float(default_flush)
         tracker.track_window_activity = True
@@ -170,6 +178,7 @@ async def get_day_details(request: Request, day_date: str):
         "locked": i18n["locked"],
         "no_session": i18n["no_session"],
         "sleep": i18n["sleep"],
+        "shutdown": i18n["shutdown"],
         "unknown": i18n["unknown"]
     }
     for item in log:
@@ -258,6 +267,7 @@ async def get_state(request: Request):
         "locked": i18n["locked"],
         "no_session": i18n["no_session"],
         "sleep": i18n["sleep"],
+        "shutdown": i18n["shutdown"],
         "unknown": i18n["unknown"]
     }
     text = state_map.get(state, state)

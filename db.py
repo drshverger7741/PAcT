@@ -70,6 +70,7 @@ async def init_db():
         """)
         # Начальные настройки, если их нет
         await db.execute("INSERT OR IGNORE INTO settings (key, value) VALUES ('idle_threshold', '300')")
+        await db.execute("INSERT OR IGNORE INTO settings (key, value) VALUES ('activity_grace_period', '5')")
         await db.execute("INSERT OR IGNORE INTO settings (key, value) VALUES ('check_interval', '10')")
         await db.execute("INSERT OR IGNORE INTO settings (key, value) VALUES ('flush_interval', '60')")
         await db.execute("INSERT OR IGNORE INTO settings (key, value) VALUES ('visible_columns', 'active_seconds,idle_seconds,locked_seconds,sleep_seconds')")
@@ -173,6 +174,14 @@ async def get_activity_log(date_str: str) -> List[Dict[str, Any]]:
         async with db.execute("SELECT * FROM activity_log WHERE date = ? ORDER BY start_time DESC", (date_str,)) as cursor:
             rows = await cursor.fetchall()
             return [dict(row) for row in rows]
+
+async def get_last_activity() -> Dict[str, Any]:
+    """Получение последней записи из лога активности."""
+    async with aiosqlite.connect(DB_PATH) as db:
+        db.row_factory = aiosqlite.Row
+        async with db.execute("SELECT * FROM activity_log ORDER BY date DESC, end_time DESC LIMIT 1") as cursor:
+            row = await cursor.fetchone()
+            return dict(row) if row else None
 
 async def update_day_comment(date_str: str, comment: str):
     """Обновление комментария к дню."""

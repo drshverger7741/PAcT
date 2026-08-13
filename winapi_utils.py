@@ -9,6 +9,8 @@ WTS_SESSION_LOGON = 0x5
 WTS_SESSION_LOGOFF = 0x6
 WM_WTSSESSION_CHANGE = 0x02B1
 NOTIFY_FOR_THIS_SESSION = 0
+WM_QUERYENDSESSION = 0x0011
+WM_ENDSESSION = 0x0016
 
 WM_POWERBROADCAST = 0x0218
 PBT_APMSUSPEND = 0x0004
@@ -74,3 +76,9 @@ kernel32.OpenProcess.restype = ctypes.wintypes.HANDLE
 
 psapi.GetModuleFileNameExW.argtypes = [ctypes.wintypes.HANDLE, ctypes.wintypes.HMODULE, ctypes.wintypes.LPWSTR, ctypes.wintypes.DWORD]
 psapi.GetModuleFileNameExW.restype = ctypes.wintypes.DWORD
+
+user32.GetLastInputInfo.argtypes = [ctypes.POINTER(LASTINPUTINFO)]
+user32.GetLastInputInfo.restype = ctypes.wintypes.BOOL
+
+kernel32.GetTickCount.argtypes = []
+kernel32.GetTickCount.restype = ctypes.wintypes.DWORD

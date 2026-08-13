@@ -24,6 +24,12 @@
                     </div>
 
                     <div class="settings-item-compact">
+                        <label for="activity_grace_period">{{ i18n.activity_grace_period }}</label>
+                        <input type="number" id="activity_grace_period" name="activity_grace_period" value="{{ activity_grace_period }}" min="0" required>
+                        <small>{{ i18n.activity_grace_period_desc }}</small>
+                    </div>
+
+                    <div class="settings-item-compact">
                         <label for="check_interval">{{ i18n.check_interval }}</label>
                         <input type="number" id="check_interval" name="check_interval" value="{{ check_interval }}" min="1" required>
                         <small>{{ i18n.check_interval_desc }}</small>

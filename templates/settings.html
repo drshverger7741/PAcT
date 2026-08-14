@@ -114,6 +114,19 @@
                         {% endif %}
                     </div>
 
+                    <div class="settings-item-compact">
+                        <label for="port">{{ i18n.port }}</label>
+                        <input type="number" id="port" name="port" value="{{ port }}"
+                               min="1024" max="65535" required
+                               class="{% if errors and errors.port %}invalid{% endif %}"
+                               aria-invalid="{% if errors and errors.port %}true{% endif %}">
+                        {% if errors and errors.port %}
+                        <small class="error-text">{{ errors.port }}</small>
+                        {% else %}
+                        <small>{{ i18n.port_desc }}</small>
+                        {% endif %}
+                    </div>
+
                     <div style="margin-top: 4px;">
                         <label class="column-checkbox column-checkbox-reversed">
                             <span>{{ i18n.track_window_activity }}</span>

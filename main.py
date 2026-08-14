@@ -6,6 +6,7 @@ import os
 import uvicorn
 import logging
 import webbrowser
+import web
 import db
 from tracker import ActivityTracker
 from web import app, init_web
@@ -35,15 +36,22 @@ def is_port_in_use(port: int) -> bool:
         return s.connect_ex(('localhost', port)) == 0
 
 async def main():
-    # Проверка занятости порта перед запуском
-    default_port = 8765
-    if is_port_in_use(default_port):
-        logger.info(f"Port {default_port} is already in use. Opening browser and exiting...")
-        webbrowser.open(f"http://localhost:{default_port}")
-        return
-
     # Инициализация БД
     await db.init_db()
+
+    # Проверка занятости выбранного в настройках порта
+    try:
+        port = int(await db.get_setting("port", "8765"))
+        if not 1024 <= port <= 65535:
+            raise ValueError
+    except (TypeError, ValueError):
+        port = 8765
+        await db.set_setting("port", str(port))
+
+    if is_port_in_use(port):
+        logger.info(f"Port {port} is already in use. Opening browser and exiting...")
+        webbrowser.open(f"http://localhost:{port}")
+        return
     
     # Создаем бэкап при запуске, если включено
     auto_backup = await db.get_setting("auto_backup_enabled", "false")
@@ -52,9 +60,6 @@ async def main():
     
     # Инициализация трекера
     tracker = ActivityTracker(db)
-    
-    # Выбор порта
-    port = 8765
     
     stop_event = asyncio.Event()
 
@@ -138,6 +143,10 @@ async def main():
     await server_task
     
     logger.info("Done.")
+
+    if web.restart_requested:
+        logger.info("Restarting application to apply the new port...")
+        os.execv(sys.executable, [sys.executable] + sys.argv)
 
 if __name__ == "__main__":
     try:

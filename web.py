@@ -26,12 +26,14 @@ templates = Jinja2Templates(directory=utils.get_templates_path())
 tracker = None
 db = None
 stop_event = None
+restart_requested = False
 
 def init_web(tracker_instance, db_module, stop_event_instance=None):
-    global tracker, db, stop_event
+    global tracker, db, stop_event, restart_requested
     tracker = tracker_instance
     db = db_module
     stop_event = stop_event_instance
+    restart_requested = False
 
 templates.env.filters["hours"] = utils.format_hours
 templates.env.filters["date_custom"] = utils.format_date_custom
@@ -154,6 +156,7 @@ async def settings_page(request: Request):
     activity_grace_period = await db.get_setting("activity_grace_period", "5")
     check_interval = await db.get_setting("check_interval", "10")
     flush_interval = await db.get_setting("flush_interval", "30")
+    port = await db.get_setting("port", "8765")
     custom_title = await db.get_setting("custom_title", "PAcT")
     track_window_activity = (await db.get_setting("track_window_activity", "true")).lower() == "true"
     password_protection_enabled = (await db.get_setting("password_protection_enabled", "false")).lower() == "true"
@@ -184,6 +187,7 @@ async def settings_page(request: Request):
             "activity_grace_period": activity_grace_period,
             "check_interval": check_interval,
             "flush_interval": flush_interval,
+            "port": port,
             "track_window_activity": track_window_activity,
             "password_protection_enabled": password_protection_enabled,
             "auto_backup_enabled": auto_backup_enabled,
@@ -208,6 +212,7 @@ async def save_settings(
     activity_grace_period: str = Form(...),
     check_interval: str = Form(...),
     flush_interval: str = Form(...),
+    port: str = Form("8765"),
     track_window_activity: bool = Form(False),
     password_protection_enabled: bool = Form(False),
     auto_backup_enabled: bool = Form(False),
@@ -260,6 +265,13 @@ async def save_settings(
             errors["flush_interval"] = i18n["error_min_value"].format(min=5)
     except ValueError:
         errors["flush_interval"] = i18n["error_invalid_number"]
+
+    try:
+        val = int(port)
+        if val < 1024 or val > 65535:
+            errors["port"] = i18n["error_port_range"]
+    except ValueError:
+        errors["port"] = i18n["error_invalid_number"]
         
     if len(custom_title) > 50:
         errors["custom_title"] = i18n["error_max_length"].format(max=50)
@@ -284,6 +296,7 @@ async def save_settings(
                 "activity_grace_period": activity_grace_period,
                 "check_interval": check_interval,
                 "flush_interval": flush_interval,
+                "port": port,
                 "track_window_activity": track_window_activity,
                 "custom_title": custom_title,
                 "visible_columns": visible_columns,
@@ -303,7 +316,9 @@ async def save_settings(
     await db.set_setting("idle_threshold", idle_threshold)
     await db.set_setting("activity_grace_period", activity_grace_period)
     await db.set_setting("check_interval", check_interval)
+    previous_port = await db.get_setting("port", "8765")
     await db.set_setting("flush_interval", flush_interval)
+    await db.set_setting("port", port)
     await db.set_setting("track_window_activity", "true" if track_window_activity else "false")
     await db.set_setting("password_protection_enabled", "true" if password_protection_enabled else "false")
     await db.set_setting("auto_backup_enabled", "true" if auto_backup_enabled else "false")
@@ -322,6 +337,11 @@ async def save_settings(
             tracker.track_window_activity = track_window_activity
         except ValueError:
             pass
+
+    if port != previous_port and stop_event:
+        global restart_requested
+        restart_requested = True
+        stop_event.set()
 
     # Принудительно отключаем защиту, если пароль не задан
     if password_protection_enabled:
@@ -359,6 +379,7 @@ async def reset_settings(request: Request):
     default_grace = "5"
     default_check = "10"
     default_flush = "60"
+    default_port = "8765"
     default_track = "true"
     default_lang = "ru"
     default_theme = "dark"
@@ -372,6 +393,7 @@ async def reset_settings(request: Request):
     await db.set_setting("activity_grace_period", default_grace)
     await db.set_setting("check_interval", default_check)
     await db.set_setting("flush_interval", default_flush)
+    await db.set_setting("port", default_port)
     await db.set_setting("track_window_activity", default_track)
     await db.set_setting("password_protection_enabled", default_password_protection)
     await db.set_setting("auto_backup_enabled", default_auto_backup)

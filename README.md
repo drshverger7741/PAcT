@@ -13,20 +13,30 @@
 
 ## Как запустить
 
+### Из скомпилированного файла
+1. Скопируйте файл `dist/PAcT.exe` в любую удобную папку.
+2. Запустите его. Если Windows SmartScreen заблокирует запуск, нажмите "Подробнее" -> "Выполнить в любом случае".
+3. После запуска откройте в браузере: `http://localhost:8765`
+4. **(Опционально)** Добавьте сервис в автозагрузку (см. раздел [Автозагрузка](#автозагрузка-windows)).
+   *Примечание: При использовании venv убедитесь, что вы запускаете `pythonw` из папки `venv\Scripts\`.*
+
 ### Из исходного кода
-1. Установите зависимости:
-   ```bash
+1. Установите Python 3.13 (рекомендуется).
+2. Создайте и активируйте виртуальное окружение:
+   ```powershell
+   python -m venv venv
+   .\venv\Scripts\activate
+   ```
+3. Установите зависимости:
+   ```powershell
    pip install -r requirements.txt
    ```
-2. Запустите сервис в фоне (без окна консоли):
+4. Запустите сервис в фоне (без окна консоли):
    ```powershell
    pythonw main.py
    ```
-3. Откройте в браузере: `http://localhost:8765`
-
-### Из скомпилированного файла
-Запустите `dist/PAcT.exe`. Если Windows SmartScreen заблокирует запуск, нажмите "Подробнее" -> "Выполнить в любом случае".
-После запуска откройте в браузере: `http://localhost:8765`
+5. Откройте в браузере: `http://localhost:8765`
+6. **(Опционально)** Добавьте сервис в автозагрузку (см. раздел [Автозагрузка](#автозагрузка-windows)).
 
 ## Интерфейс
 ### Главная страница
@@ -50,9 +60,9 @@
 ## Автозагрузка (Windows)
 
 ### Для Python-скрипта (без консоли)
-Выполните команду в PowerShell, находясь в папке проекта:
+Выполните команду в PowerShell от имени администратора, находясь в папке проекта (с активированным venv):
 ```powershell
-$pythonPath = (Get-Command pythonw.exe).Source; $scriptPath = Join-Path (Get-Location) "main.py"; New-ItemProperty -Path "HKCU:\Software\Microsoft\Windows\CurrentVersion\Run" -Name "PAcT_Monitor" -Value "`"$pythonPath`" `"$scriptPath`"" -PropertyType String -Force
+$pythonPath = Join-Path (Get-Location) "venv\Scripts\pythonw.exe"; $scriptPath = Join-Path (Get-Location) "main.py"; New-ItemProperty -Path "HKCU:\Software\Microsoft\Windows\CurrentVersion\Run" -Name "PAcT_Monitor" -Value "`"$pythonPath`" `"$scriptPath`"" -PropertyType String -Force
 ```
 
 ### Для скомпилированного EXE

@@ -19,6 +19,25 @@
             secShort: '{{ i18n.sec_short }}',
             totalCountTpl: '{{ i18n.total_count }}'
         };
+
+        // Логика защиты паролем: требовать авторизацию в каждой новой сессии браузера (вкладке)
+        {% if password_protection_enabled %}
+        (function() {
+            const isLoginPage = window.location.pathname === '/login';
+            const urlParams = new URLSearchParams(window.location.search);
+            
+            if (urlParams.get('login') === '1') {
+                sessionStorage.setItem('pact_authenticated', 'true');
+                // Убираем параметр из URL для чистоты
+                const newUrl = window.location.pathname + window.location.hash;
+                window.history.replaceState({}, document.title, newUrl);
+            } else if (!isLoginPage && !sessionStorage.getItem('pact_authenticated')) {
+                // Если мы не на странице логина и нет флага сессии - принудительно выходим,
+                // чтобы сбросить cookie и запросить пароль заново.
+                window.location.href = '/logout';
+            }
+        })();
+        {% endif %}
     </script>
     <script src="/static/js/app.js"></script>
     

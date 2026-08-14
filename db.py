@@ -1,6 +1,7 @@
 import aiosqlite
 import os
 import sys
+import hashlib
 from datetime import date
 from typing import List, Dict, Any, Optional
 
@@ -101,6 +102,17 @@ async def set_setting(key: str, value: Any):
     async with aiosqlite.connect(DB_PATH) as db:
         await db.execute("INSERT OR REPLACE INTO settings (key, value) VALUES (?, ?)", (key, str(value)))
         await db.commit()
+
+def hash_password(password: str) -> str:
+    """Хэширует пароль для хранения."""
+    return hashlib.sha256(password.encode()).hexdigest()
+
+async def verify_password(password: str) -> bool:
+    """Проверяет введенный пароль."""
+    stored_hash = await get_setting("app_password_hash")
+    if not stored_hash:
+        return False
+    return hash_password(password) == stored_hash
 
 async def upsert_daily_stats(stats_date: str, data: Dict[str, float]):
     """Обновление или вставка статистики за день."""

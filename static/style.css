@@ -185,15 +185,18 @@ table[role="grid"] th, table[role="grid"] td {
     color: var(--primary);
 }
 
-/* Tooltip larger size */
+/* Tooltip styles */
 [data-tooltip]::before,
 [data-tooltip]::after {
-    font-size: 1.1rem !important;
+    font-size: 0.7rem !important;
 }
 [data-tooltip]::after {
-    padding: 0.5rem 1rem !important;
+    padding: 0.1rem 0.4rem !important;
     width: auto !important;
-    white-space: nowrap !important;
+    max-width: 120px;
+    white-space: normal !important;
+    text-align: center;
+    line-height: 1;
 }
 
 /* Main container width */
@@ -678,4 +681,27 @@ input[role="switch"] {
 }
 .danger-zone .settings-group-title {
     color: #f44336;
+}
+
+.disabled-label {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+.disabled-label span {
+    color: var(--secondary);
+}
+.error-text {
+    color: #d32f2f;
+    font-size: 0.75rem;
+    margin-top: 2px;
+    display: block;
+}
+
+input.invalid {
+    border-color: #d32f2f !important;
+}
+
+input.invalid:focus {
+    box-shadow: 0 0 0 0.2rem rgba(211, 47, 47, 0.25) !important;
 }

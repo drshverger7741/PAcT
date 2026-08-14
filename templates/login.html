@@ -1,0 +1,24 @@
+{% extends "base.html" %}
+
+{% block nav_links %}
+{% endblock %}
+
+{% block content %}
+<div style="max-width: 400px; margin: 100px auto;">
+    <article>
+        <header>
+            <h3 style="margin-bottom: 0;">🔐 {{ i18n.auth_required }}</h3>
+        </header>
+        <form action="/login" method="post">
+            <label for="password">{{ i18n.password }}</label>
+            <input type="password" id="password" name="password" required autofocus>
+            
+            {% if request.query_params.get('error') %}
+            <small style="color: var(--del-color);">{{ i18n.wrong_password }}</small>
+            {% endif %}
+            
+            <button type="submit" style="margin-top: 20px;">{{ i18n.login }}</button>
+        </form>
+    </article>
+</div>
+{% endblock %}

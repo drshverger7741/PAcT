@@ -120,7 +120,7 @@ class ActivityTracker:
             st = datetime.fromtimestamp(start_time).strftime("%H:%M:%S")
             await self.db.add_activity_interval(self.today, st, None, state)
             return
-        d = datetime.fromtimestamp(start_time).date().isoformat()
+        d = datetime.fromtimestamp(start_time).strftime("%Y-%m-%d")
         st = datetime.fromtimestamp(start_time).strftime("%H:%M:%S")
         et = datetime.fromtimestamp(end_time).strftime("%H:%M:%S")
         await self.db.add_activity_interval(d, st, et, state)
@@ -138,10 +138,11 @@ class ActivityTracker:
         if new_state != "active":
             self.first_activity_time = 0.0
 
-    async def flush_to_db(self):
+    async def flush_to_db(self, date_override=None):
         if self.is_flushing:
             return
         self.is_flushing = True
+        target_date = date_override or self.today
         try:
             with self._lock:
                 to_flush = self.stats.copy()
@@ -152,11 +153,11 @@ class ActivityTracker:
                 self.window_buffer = []
             
             if any(to_flush.values()):
-                await self.db.upsert_daily_stats(self.today, to_flush)
+                await self.db.upsert_daily_stats(target_date, to_flush)
                 
             if self.track_window_activity:
                 for win in windows_to_flush:
-                    await self.db.add_window_activity(self.today, win[0], win[1], win[2], win[3], win[4])
+                    await self.db.add_window_activity(target_date, win[0], win[1], win[2], win[3], win[4])
                 
             self.last_flush_time = time.time()
         finally:
@@ -249,8 +250,32 @@ class ActivityTracker:
                 # Обновление даты
                 new_today = date.today().isoformat()
                 if new_today != self.today:
-                    await self.flush_to_db()
+                    now = time.time()
+                    # Рассчитываем время полуночи
+                    midnight = datetime.fromtimestamp(now).replace(hour=0, minute=0, second=0, microsecond=0).timestamp()
+                    
+                    # 1. Закрываем текущий интервал старым днем
+                    await self.log_interval(self.current_state, self.last_state_change_time, midnight)
+                    
+                    # 2. Закрываем текущее окно старым днем (если активно)
+                    if self.track_window_activity and self.current_window["start_time"] > 0:
+                        st_str = datetime.fromtimestamp(self.current_window["start_time"]).strftime("%H:%M:%S")
+                        et_str = "23:59:59"
+                        dur = midnight - self.current_window["start_time"]
+                        if dur > 0:
+                            self.window_buffer.append((self.current_window["title"], self.current_window["app"], st_str, et_str, dur))
+                    
+                    # 3. Сбрасываем статистику и сохраняем в БД за старый день
+                    old_today = self.today
                     self.today = new_today
+                    await self.flush_to_db(date_override=old_today)
+                    self.last_state_change_time = midnight
+                    
+                    # 5. Переоткрываем окно новым днем
+                    if self.track_window_activity and self.current_window["start_time"] > 0:
+                        self.current_window["start_time"] = midnight
+                    
+                    logger.info(f"Day changed to {new_today}. Intervals and windows split at midnight.")
 
                 # Поллинг активности, если не заблокирован и не спим
                 now = time.time()

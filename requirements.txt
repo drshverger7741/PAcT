@@ -4,3 +4,4 @@ aiosqlite
 jinja2
 python-multipart
 pyinstaller
+nuitka

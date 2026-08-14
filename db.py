@@ -8,6 +8,7 @@ from datetime import date, datetime
 from typing import List, Dict, Any, Optional
 
 logger = logging.getLogger(__name__)
+DB_FILENAME = "pact_db.db"
 
 def get_db_path() -> str:
     """Возвращает путь к папке приложения."""
@@ -15,7 +16,7 @@ def get_db_path() -> str:
         return os.path.dirname(sys.executable)
     return os.path.dirname(os.path.abspath(__file__))
 
-DB_PATH = os.path.join(get_db_path(), "activity_monitor.db")
+DB_PATH = os.path.join(get_db_path(), DB_FILENAME)
 LOG_PATH = os.path.join(get_db_path(), "app.log")
 
 async def init_db():
@@ -332,7 +333,7 @@ async def restore_backup(filename: str) -> bool:
     
     try:
         # 1. Делаем временный бэкап текущей БД перед восстановлением
-        temp_backup = os.path.join(get_db_path(), "activity_monitor_pre_restore.db")
+        temp_backup = os.path.join(get_db_path(), "pact_db_pre_restore.db")
         shutil.copy2(DB_PATH, temp_backup)
         
         # 2. Копируем файл бэкапа поверх текущей БД

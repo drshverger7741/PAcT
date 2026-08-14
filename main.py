@@ -5,6 +5,7 @@ import sys
 import os
 import uvicorn
 import logging
+import webbrowser
 import db
 from tracker import ActivityTracker
 from web import app, init_web
@@ -34,6 +35,13 @@ def is_port_in_use(port: int) -> bool:
         return s.connect_ex(('localhost', port)) == 0
 
 async def main():
+    # Проверка занятости порта перед запуском
+    default_port = 8765
+    if is_port_in_use(default_port):
+        logger.info(f"Port {default_port} is already in use. Opening browser and exiting...")
+        webbrowser.open(f"http://localhost:{default_port}")
+        return
+
     # Инициализация БД
     await db.init_db()
     
@@ -47,8 +55,6 @@ async def main():
     
     # Выбор порта
     port = 8765
-    while is_port_in_use(port):
-        port += 1
     
     stop_event = asyncio.Event()
 
@@ -100,6 +106,10 @@ async def main():
     # Запуск задач
     tracker_task = asyncio.create_task(tracker.run())
     
+    # Открываем браузер при запуске
+    logger.info(f"Opening browser at http://localhost:{port}")
+    webbrowser.open(f"http://localhost:{port}")
+
     # Обработка остановки
     loop = asyncio.get_running_loop()
     

@@ -539,7 +539,7 @@ input[role="switch"] {
     padding: 16px 20px;
     border-radius: 8px;
     border: 1px solid var(--border-extra-light);
-    margin-bottom: 0;
+    margin-bottom: 15px;
 }
 .danger-zone {
     grid-column: 1 / -1;
@@ -572,6 +572,9 @@ input[role="switch"] {
     font-size: 0.95rem !important;
     width: 100% !important;
     margin-bottom: 0 !important;
+}
+.settings-item-wide {
+    grid-column: 1 / -1;
 }
 .settings-item-compact small {
     font-size: 0.8rem;
@@ -644,6 +647,10 @@ input[role="switch"] {
 }
 .column-checkbox:hover {
     background: rgba(255, 255, 255, 0.08);
+}
+.column-checkbox input[role="switch"] {
+    width: 40px !important;
+    height: 20px !important;
 }
 .column-checkbox input {
     margin-bottom: 0 !important;

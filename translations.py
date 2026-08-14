@@ -114,7 +114,24 @@ TRANSLATIONS = {
             "Январь", "Февраль", "Март", "Апрель", "Май", "Июнь",
             "Июль", "Август", "Сентябрь", "Октябрь", "Ноябрь", "Декабрь"
         ],
-        "weekdays": ["пн.", "вт.", "ср.", "чт.", "пт.", "сб.", "вс."]
+        "weekdays": ["пн.", "вт.", "ср.", "чт.", "пт.", "сб.", "вс."],
+        "backups": "Резервные копии",
+        "create_backup": "Создать бэкап сейчас",
+        "backup_name": "Имя файла",
+        "backup_size": "Размер",
+        "backup_date": "Дата создания",
+        "download": "Скачать",
+        "restore": "Восстановить",
+        "delete": "Удалить",
+        "confirm_restore": "Вы уверены, что хотите восстановить базу данных из этого файла? Текущие данные будут заменены.",
+        "confirm_delete": "Удалить этот бэкап?",
+        "backup_created": "Бэкап успешно создан",
+        "backup_restored": "Данные успешно восстановлены. Рекомендуется перезапустить приложение.",
+        "no_backups": "Бэкапов пока нет",
+        "auto_backup_enabled": "Автоматически создавать резервные копии",
+        "auto_backup_enabled_desc": "Создавать бэкап при запуске и в полночь",
+        "date_format": "Формат даты",
+        "date_format_desc": "Как отображать даты в приложении (например, dd.MM.yyyy)"
     },
     "en": {
         "title": "PAcT",
@@ -231,6 +248,23 @@ TRANSLATIONS = {
             "January", "February", "March", "April", "May", "June",
             "July", "August", "September", "October", "November", "December"
         ],
-        "weekdays": ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"]
+        "weekdays": ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"],
+        "backups": "Backups",
+        "create_backup": "Create backup now",
+        "backup_name": "Filename",
+        "backup_size": "Size",
+        "backup_date": "Date created",
+        "download": "Download",
+        "restore": "Restore",
+        "delete": "Delete",
+        "confirm_restore": "Are you sure you want to restore the database from this file? Current data will be replaced.",
+        "confirm_delete": "Delete this backup?",
+        "backup_created": "Backup created successfully",
+        "backup_restored": "Data restored successfully. It is recommended to restart the application.",
+        "no_backups": "No backups yet",
+        "auto_backup_enabled": "Automatically create backups",
+        "auto_backup_enabled_desc": "Create a backup on startup and at midnight",
+        "date_format": "Date Format",
+        "date_format_desc": "How to display dates in the app (e.g., dd.MM.yyyy)"
     }
 }

@@ -50,7 +50,7 @@
                 <summary class="day-summary">
                     <div style="display: flex; justify-content: space-between; width: 100%; align-items: center; gap: 10px; flex-wrap: nowrap;">
                         <div style="flex: 0 0 160px; white-space: nowrap;">
-                            <strong>{{ day.date | date_custom(language) }}</strong>
+                            <strong>{{ day.formatted_date }}</strong>
                         </div>
                         <div class="stats-grid-container" style="flex: 1; min-width: 0;" onclick="event.stopPropagation();">
                             {% if 'active_seconds' in visible_columns %}<div class="stats-grid-item" title="{{ i18n.active }}"><span class="stats-grid-item-label">{{ i18n.act_short }}</span>{{ day.active_seconds | hours }}{{ i18n.hour_short }}</div>{% endif %}
@@ -62,10 +62,10 @@
                             {% if 'unknown_seconds' in visible_columns %}<div class="stats-grid-item" title="{{ i18n.unknown }}"><span class="stats-grid-item-label">{{ i18n.unknown_short }}</span>{{ day.unknown_seconds | hours }}{{ i18n.hour_short }}</div>{% endif %}
                         </div>
                         <div style="flex: 0 0 240px; display: flex; align-items: center; justify-content: flex-end;">
-                            <span class="stats-icon" data-tooltip="{{ i18n.window_stats }}" onclick="event.stopPropagation(); openWindowStats('{{ day.date | date_custom(language) }}', '{{ day.date }}', '{{ day.date }}')">📊</span>
+                            <span class="stats-icon" data-tooltip="{{ i18n.window_stats }}" onclick="event.stopPropagation(); openWindowStats('{{ day.formatted_date }}', '{{ day.date }}', '{{ day.date }}')">📊</span>
                             <div id="comment-day-{{ day.date }}" 
                                  class="comment-text"
-                                 onclick="event.stopPropagation(); openModal('{{ i18n.day_comment_title }}', '{{ day.date | date_custom(language) }}', '/api/day_comment/{{ day.date }}', 'comment-day-{{ day.date }}', this.textContent.trim())">{{ day.comment or '' }}</div>
+                                 onclick="event.stopPropagation(); openModal('{{ i18n.day_comment_title }}', '{{ day.formatted_date }}', '/api/day_comment/{{ day.date }}', 'comment-day-{{ day.date }}', this.textContent.trim())">{{ day.comment or '' }}</div>
                         </div>
                     </div>
                 </summary>

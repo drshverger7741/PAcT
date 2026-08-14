@@ -37,6 +37,11 @@ async def main():
     # Инициализация БД
     await db.init_db()
     
+    # Создаем бэкап при запуске, если включено
+    auto_backup = await db.get_setting("auto_backup_enabled", "false")
+    if auto_backup.lower() == "true":
+        await db.create_backup()
+    
     # Инициализация трекера
     tracker = ActivityTracker(db)
     

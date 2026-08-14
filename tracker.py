@@ -275,6 +275,11 @@ class ActivityTracker:
                     if self.track_window_activity and self.current_window["start_time"] > 0:
                         self.current_window["start_time"] = midnight
                     
+                    # 6. Создаем бэкап при смене суток, если включено
+                    auto_backup = await self.db.get_setting("auto_backup_enabled", "false")
+                    if auto_backup.lower() == "true":
+                        await self.db.create_backup()
+                    
                     logger.info(f"Day changed to {new_today}. Intervals and windows split at midnight.")
 
                 # Поллинг активности, если не заблокирован и не спим

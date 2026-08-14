@@ -3,7 +3,8 @@
 {% block nav_links %}
 <li><a href="/" class="secondary btn-compact">{{ i18n.stats }}</a></li>
 <li><a href="/settings" class="btn-compact">{{ i18n.settings }}</a></li>
-<li id="current-state-container" class="state-indicator" hx-get="/api/state" hx-trigger="load, every 5s" hx-swap="innerHTML">
+<li id="current-state-container" class="state-indicator" hx-get="/api/state" hx-trigger="load, every 5s"
+    hx-swap="innerHTML">
     {{ i18n.loading_details }}
 </li>
 {% endblock %}
@@ -11,12 +12,51 @@
 {% block modals %}
 {% include "modals/comment_modal.html" %}
 {% include "modals/password_modal.html" %}
+{% include "modals/backup_modal.html" %}
 {% endblock %}
 
 {% block content %}
 <form action="/settings" method="post" style="margin-bottom: 0;">
     <div class="settings-three-col-grid">
-        <div class="settings-card">
+
+    <div class="settings-card danger-zone" style="margin-top: 15px;">
+        <div class="settings-group-title" style="margin-bottom: 0;">
+            <span>⚠️</span> {{ i18n.service_control }}
+        </div>
+        <div style="display: flex; flex-direction: column; gap: 10px;">
+            <p style="font-size: 0.85rem; opacity: 0.8; margin-bottom: 0;">{{ i18n.shutdown_warning }}</p>
+            <div style="display: flex; gap: 10px; flex-wrap: wrap; align-items: center; justify-content: space-between;">
+                <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+                    <button id="shutdown-btn" type="button" class="outline contrast btn-compact"
+                            style="width: auto; margin-bottom: 0; white-space: nowrap;">🛑 {{ i18n.shutdown_service }}
+                    </button>
+
+                    {% if is_paused %}
+                    <button id="resume-btn" type="button" class="outline btn-compact"
+                            style="width: auto; margin-bottom: 0; white-space: nowrap;">▶ {{ i18n.resume_service }}
+                    </button>
+                    {% else %}
+                    <button id="pause-btn" type="button" class="outline btn-compact"
+                            style="width: auto; margin-bottom: 0; white-space: nowrap;">⏸ {{ i18n.stop_service }}
+                    </button>
+                    {% endif %}
+                </div>
+
+                <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+                    <button type="button" class="outline secondary btn-compact" style="width: auto; margin-bottom: 0;"
+                            onclick="if(confirm('{{ i18n.confirm_reset }}')) { document.getElementById('reset-form').submit(); }">
+                        {{ i18n.reset_defaults }}
+                    </button>
+                    <button type="submit" class="btn-compact"
+                            style="width: auto; margin-bottom: 0; padding-left: 2rem; padding-right: 2rem;">{{
+                        i18n.save_changes }}
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+        <div style="display: flex; flex-direction: column; gap: 15px;">
+            <div class="settings-card">
             <div class="settings-group-title">
                 <span>⚙️</span> {{ i18n.monitoring_settings }}
             </div>
@@ -24,7 +64,8 @@
                 <div class="settings-grid-compact" style="grid-template-columns: 1fr;">
                     <div class="settings-item-compact">
                         <label for="idle_threshold">{{ i18n.idle_threshold }}</label>
-                        <input type="number" id="idle_threshold" name="idle_threshold" value="{{ idle_threshold }}" min="5" required
+                        <input type="number" id="idle_threshold" name="idle_threshold" value="{{ idle_threshold }}"
+                               min="5" required
                                class="{% if errors and errors.idle_threshold %}invalid{% endif %}"
                                aria-invalid="{% if errors and errors.idle_threshold %}true{% endif %}">
                         {% if errors and errors.idle_threshold %}
@@ -36,7 +77,8 @@
 
                     <div class="settings-item-compact">
                         <label for="activity_grace_period">{{ i18n.activity_grace_period }}</label>
-                        <input type="number" id="activity_grace_period" name="activity_grace_period" value="{{ activity_grace_period }}" min="0" required
+                        <input type="number" id="activity_grace_period" name="activity_grace_period"
+                               value="{{ activity_grace_period }}" min="0" required
                                class="{% if errors and errors.activity_grace_period %}invalid{% endif %}"
                                aria-invalid="{% if errors and errors.activity_grace_period %}true{% endif %}">
                         {% if errors and errors.activity_grace_period %}
@@ -48,7 +90,8 @@
 
                     <div class="settings-item-compact">
                         <label for="check_interval">{{ i18n.check_interval }}</label>
-                        <input type="number" id="check_interval" name="check_interval" value="{{ check_interval }}" min="1" required
+                        <input type="number" id="check_interval" name="check_interval" value="{{ check_interval }}"
+                               min="1" required
                                class="{% if errors and errors.check_interval %}invalid{% endif %}"
                                aria-invalid="{% if errors and errors.check_interval %}true{% endif %}">
                         {% if errors and errors.check_interval %}
@@ -60,7 +103,8 @@
 
                     <div class="settings-item-compact">
                         <label for="flush_interval">{{ i18n.flush_interval }}</label>
-                        <input type="number" id="flush_interval" name="flush_interval" value="{{ flush_interval }}" min="5" required
+                        <input type="number" id="flush_interval" name="flush_interval" value="{{ flush_interval }}"
+                               min="5" required
                                class="{% if errors and errors.flush_interval %}invalid{% endif %}"
                                aria-invalid="{% if errors and errors.flush_interval %}true{% endif %}">
                         {% if errors and errors.flush_interval %}
@@ -73,38 +117,75 @@
                     <div style="margin-top: 4px;">
                         <label class="column-checkbox column-checkbox-reversed">
                             <span>{{ i18n.track_window_activity }}</span>
-                            <input type="checkbox" id="track_window_activity" name="track_window_activity" {% if track_window_activity %}checked{% endif %}>
+                            <input type="checkbox" id="track_window_activity" name="track_window_activity" role="switch" {% if
+                                   track_window_activity %}checked{% endif %}>
                         </label>
-                        <small style="margin-top: 0; font-size: 0.75rem; line-height: 1.2;">{{ i18n.track_window_activity_desc }}</small>
+                        <small style="margin-top: 0; font-size: 0.75rem; line-height: 1.2;">{{
+                            i18n.track_window_activity_desc }}</small>
+                    </div>
+
+                </div>
+            </div>
+            </div>
+        </div>
+        <div style="display: flex; flex-direction: column; gap: 15px;">
+            <div class="settings-card" >
+                <div class="settings-group-title">
+                    <span>📊</span> {{ i18n.visible_columns }}
+                </div>
+                <div class="columns-grid" style="grid-template-columns: 1fr;">
+                    {% for col_id, col_name in all_columns %}
+                    <label class="column-checkbox">
+                        <input type="checkbox" name="visible_columns" value="{{ col_id }}" {% if col_id in
+                               visible_columns %}checked{% endif %}>
+                        <span>{{ col_name }}</span>
+                    </label>
+                    {% endfor %}
+                </div>
+            </div>
+
+            <div class="settings-card">
+                <div class="settings-group-title">
+                    <span>💾</span> {{ i18n.backups }}
+                </div>
+                <div class="settings-grid-compact">
+                    <div style="margin-top: 4px;">
+                        <label class="column-checkbox column-checkbox-reversed">
+                            <span>{{ i18n.auto_backup_enabled }}</span>
+                            <input type="checkbox" id="auto_backup_enabled" name="auto_backup_enabled" role="switch" {% if
+                                   auto_backup_enabled %}checked{% endif %}>
+                        </label>
+                        <small style="margin-top: 0; font-size: 0.75rem; line-height: 1.2;">{{
+                            i18n.auto_backup_enabled_desc }}</small>
+                    </div>
+
+                    <div style="margin-top: 10px;">
+                        <button type="button" class="outline btn-compact" style="width: auto;"
+                                onclick="openBackupModal()">
+                            💾 {{ i18n.backups }}
+                        </button>
+                        <small style="margin-top: 5px; font-size: 0.75rem; line-height: 1.2;">{{
+                            i18n.total_count.replace('{count}', backups|length|string) }}</small>
                     </div>
                 </div>
             </div>
         </div>
-
-        <div class="settings-card">
-            <div class="settings-group-title">
-                <span>📊</span> {{ i18n.visible_columns }}
-            </div>
-            <div class="columns-grid" style="grid-template-columns: 1fr;">
-                {% for col_id, col_name in all_columns %}
-                <label class="column-checkbox">
-                    <input type="checkbox" name="visible_columns" value="{{ col_id }}" {% if col_id in visible_columns %}checked{% endif %}>
-                    <span>{{ col_name }}</span>
-                </label>
-                {% endfor %}
-            </div>
-        </div>
-
-        <div class="settings-card">
+        <div style="display: flex; flex-direction: column; gap: 15px;">
+            <div class="settings-card">
             <div class="settings-group-title">
                 <span>🎨</span> {{ i18n.interface_settings }}
             </div>
-            <div class="settings-grid-compact">
+            <div class="settings-grid-compact" style="grid-template-columns: 1fr 1fr;">
                 <div class="settings-item-compact">
                     <label for="language">{{ i18n.language }}</label>
                     <select id="language" name="language">
-                        <option value="ru" {% if language == 'ru' %}selected{% endif %}>{{ i18n.lang_name_ru }}</option>
-                        <option value="en" {% if language == 'en' %}selected{% endif %}>{{ i18n.lang_name_en }}</option>
+                        {% if language == "ru" %}
+                        <option value="ru" selected>Русский (RU)</option>
+                        <option value="en">English (EN)</option>
+                        {% else %}
+                        <option value="ru">Русский (RU)</option>
+                        <option value="en" selected>English (EN)</option>
+                        {% endif %}
                     </select>
                 </div>
 
@@ -121,9 +202,21 @@
                     </select>
                 </div>
 
-                <div class="settings-item-compact">
+                <div class="settings-item-compact settings-item-wide">
+                    <label for="date_format">{{ i18n.date_format }}</label>
+                    <select id="date_format" name="date_format">
+                        <option value="dd.MM.yyyy" {% if date_format == "dd.MM.yyyy" %}selected{% endif %}>dd.MM.yyyy</option>
+                        <option value="yyyy-MM-dd" {% if date_format == "yyyy-MM-dd" %}selected{% endif %}>yyyy-MM-dd</option>
+                        <option value="MM/dd/yyyy" {% if date_format == "MM/dd/yyyy" %}selected{% endif %}>MM/dd/yyyy</option>
+                        <option value="dd MMMM yyyy" {% if date_format == "dd MMMM yyyy" %}selected{% endif %}>dd MMMM yyyy</option>
+                    </select>
+                    <small>{{ i18n.date_format_desc }}</small>
+                </div>
+
+                <div class="settings-item-compact settings-item-wide">
                     <label for="custom_title">{{ i18n.custom_title }}</label>
-                    <input type="text" id="custom_title" name="custom_title" value="{{ custom_title }}" maxlength="50" placeholder="{{ i18n.custom_title }}"
+                    <input type="text" id="custom_title" name="custom_title" value="{{ custom_title }}" maxlength="50"
+                           placeholder="{{ i18n.custom_title }}"
                            class="{% if errors and errors.custom_title %}invalid{% endif %}"
                            aria-invalid="{% if errors and errors.custom_title %}true{% endif %}">
                     {% if errors and errors.custom_title %}
@@ -133,16 +226,17 @@
                     {% endif %}
                 </div>
             </div>
-            
+
             <div class="settings-group-title" style="margin-top: 15px;">
                 <span>🔐</span> {{ i18n.password_protection }}
             </div>
             <div class="settings-grid-compact">
                 <div style="margin-top: 4px;">
-                    <label class="column-checkbox column-checkbox-reversed {% if not has_password %}disabled-label{% endif %}" 
-                           {% if not has_password %}title="{{ i18n.set_password_first }}"{% endif %}>
+                    <label class="column-checkbox column-checkbox-reversed {% if not has_password %}disabled-label{% endif %}"
+                           {% if not has_password %}title="{{ i18n.set_password_first }}" {% endif %}>
                         <span>{{ i18n.enable_password_protection }}</span>
-                        <input type="checkbox" id="password_protection_enabled" name="password_protection_enabled" 
+                        <input type="checkbox" id="password_protection_enabled" name="password_protection_enabled"
+                               role="switch"
                                {% if password_protection_enabled %}checked{% endif %}
                                {% if not has_password %}disabled{% endif %}>
                     </label>
@@ -154,46 +248,21 @@
                         {% endif %}
                     </small>
                 </div>
-                
+
                 <div style="margin-top: 10px;">
                     {% if has_password %}
-                    <button type="button" class="outline btn-compact" style="width: auto;" onclick="openPasswordModal('{{ i18n.change_password }}')">
+                    <button type="button" class="outline btn-compact" style="width: auto;"
+                            onclick="openPasswordModal('{{ i18n.change_password }}')">
                         {{ i18n.change_password }}
                     </button>
                     {% else %}
-                    <button type="button" class="outline btn-compact" style="width: auto;" onclick="openPasswordModal('{{ i18n.set_password }}')">
+                    <button type="button" class="outline btn-compact" style="width: auto;"
+                            onclick="openPasswordModal('{{ i18n.set_password }}')">
                         {{ i18n.set_password }}
                     </button>
                     {% endif %}
                 </div>
             </div>
-        </div>
-    </div>
-
-    <div class="settings-card danger-zone" style="margin-top: 15px;">
-        <div class="settings-group-title" style="margin-bottom: 0;">
-            <span>⚠️</span> {{ i18n.service_control }}
-        </div>
-        <div style="display: flex; flex-direction: column; gap: 10px;">
-            <p style="font-size: 0.85rem; opacity: 0.8; margin-bottom: 0;">{{ i18n.shutdown_warning }}</p>
-            <div style="display: flex; gap: 10px; flex-wrap: wrap; align-items: center; justify-content: space-between;">
-                <div style="display: flex; gap: 10px; flex-wrap: wrap;">
-                    <button id="shutdown-btn" type="button" class="outline contrast btn-compact" style="width: auto; margin-bottom: 0; white-space: nowrap;">🛑 {{ i18n.shutdown_service }}</button>
-                    
-                    {% if is_paused %}
-                    <button id="resume-btn" type="button" class="outline btn-compact" style="width: auto; margin-bottom: 0; white-space: nowrap;">▶ {{ i18n.resume_service }}</button>
-                    {% else %}
-                    <button id="pause-btn" type="button" class="outline btn-compact" style="width: auto; margin-bottom: 0; white-space: nowrap;">⏸ {{ i18n.stop_service }}</button>
-                    {% endif %}
-                </div>
-
-                <div style="display: flex; gap: 10px; flex-wrap: wrap;">
-                    <button type="button" class="outline secondary btn-compact" style="width: auto; margin-bottom: 0;"
-                            onclick="if(confirm('{{ i18n.confirm_reset }}')) { document.getElementById('reset-form').submit(); }">
-                        {{ i18n.reset_defaults }}
-                    </button>
-                    <button type="submit" class="btn-compact" style="width: auto; margin-bottom: 0; padding-left: 2rem; padding-right: 2rem;">{{ i18n.save_changes }}</button>
-                </div>
             </div>
         </div>
     </div>

@@ -2,8 +2,12 @@ import aiosqlite
 import os
 import sys
 import hashlib
-from datetime import date
+import logging
+import shutil
+from datetime import date, datetime
 from typing import List, Dict, Any, Optional
+
+logger = logging.getLogger(__name__)
 
 def get_db_path() -> str:
     """Возвращает путь к папке приложения."""
@@ -76,6 +80,7 @@ async def init_db():
         await db.execute("INSERT OR IGNORE INTO settings (key, value) VALUES ('flush_interval', '60')")
         await db.execute("INSERT OR IGNORE INTO settings (key, value) VALUES ('visible_columns', 'active_seconds,idle_seconds,locked_seconds,sleep_seconds')")
         await db.execute("INSERT OR IGNORE INTO settings (key, value) VALUES ('language', 'ru')")
+        await db.execute("INSERT OR IGNORE INTO settings (key, value) VALUES ('auto_backup_enabled', 'False')")
         
         # Миграции
         async with db.execute("PRAGMA table_info(daily_stats)") as cursor:
@@ -253,6 +258,90 @@ async def add_window_activity(date_str: str, title: str, app: str, start: str, e
             (date_str, title, app, start, end, duration)
         )
         await db.commit()
+
+async def create_backup() -> Optional[str]:
+    """Создает бэкап базы данных с помощью VACUUM INTO."""
+    backup_dir = os.path.join(get_db_path(), "backups")
+    os.makedirs(backup_dir, exist_ok=True)
+    
+    timestamp = datetime.now().strftime("%Y-%m-%d_%H%M%S")
+    backup_filename = f"backup_activity_{timestamp}.db"
+    backup_path = os.path.join(backup_dir, backup_filename)
+    
+    try:
+        async with aiosqlite.connect(DB_PATH) as db:
+            # Используем VACUUM INTO для безопасного копирования во время работы
+            # Путь в Windows может содержать пробелы, поэтому экранируем его
+            await db.execute(f"VACUUM INTO '{backup_path}'")
+        
+        logger.info(f"Backup created: {backup_path}")
+        await rotate_backups(backup_dir)
+        return backup_filename
+    except Exception as e:
+        logger.error(f"Failed to create backup: {e}")
+        return None
+
+async def rotate_backups(backup_dir: str, keep_days: int = 7):
+    """Удаляет старые бэкапы, оставляя только за последние N дней."""
+    try:
+        backups = []
+        for f in os.listdir(backup_dir):
+            if f.startswith("backup_activity_") and f.endswith(".db"):
+                path = os.path.join(backup_dir, f)
+                backups.append((path, os.path.getmtime(path)))
+        
+        # Сортируем по времени изменения (новые в конце)
+        backups.sort(key=lambda x: x[1])
+        
+        # Оставляем только последние keep_days бэкапов
+        if len(backups) > keep_days:
+            to_delete = backups[:-keep_days]
+            for path, _ in to_delete:
+                os.remove(path)
+                logger.info(f"Old backup deleted: {path}")
+    except Exception as e:
+        logger.error(f"Error during backup rotation: {e}")
+
+async def list_backups() -> List[Dict[str, Any]]:
+    """Возвращает список доступных бэкапов."""
+    backup_dir = os.path.join(get_db_path(), "backups")
+    if not os.path.exists(backup_dir):
+        return []
+    
+    backups = []
+    for f in os.listdir(backup_dir):
+        if f.startswith("backup_activity_") and f.endswith(".db"):
+            path = os.path.join(backup_dir, f)
+            size = os.path.getsize(path)
+            mtime = os.path.getmtime(path)
+            backups.append({
+                "filename": f,
+                "size": size,
+                "date": datetime.fromtimestamp(mtime).strftime("%Y-%m-%d %H:%M:%S")
+            })
+    
+    # Сортируем: новые сверху
+    backups.sort(key=lambda x: x["filename"], reverse=True)
+    return backups
+
+async def restore_backup(filename: str) -> bool:
+    """Восстанавливает базу данных из бэкапа."""
+    backup_path = os.path.join(get_db_path(), "backups", filename)
+    if not os.path.exists(backup_path):
+        return False
+    
+    try:
+        # 1. Делаем временный бэкап текущей БД перед восстановлением
+        temp_backup = os.path.join(get_db_path(), "activity_monitor_pre_restore.db")
+        shutil.copy2(DB_PATH, temp_backup)
+        
+        # 2. Копируем файл бэкапа поверх текущей БД
+        shutil.copy2(backup_path, DB_PATH)
+        logger.info(f"Database restored from {filename}")
+        return True
+    except Exception as e:
+        logger.error(f"Failed to restore backup: {e}")
+        return False
 
 async def get_window_stats(start_date: str, end_date: str = None) -> List[Dict[str, Any]]:
     """Получение агрегированной статистики по окнам за период."""

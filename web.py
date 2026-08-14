@@ -1,9 +1,10 @@
 from fastapi import FastAPI, Request, Form, Response, Cookie
-from fastapi.responses import HTMLResponse, RedirectResponse, JSONResponse
+from fastapi.responses import HTMLResponse, RedirectResponse, JSONResponse, FileResponse
 from fastapi.templating import Jinja2Templates
 from fastapi.staticfiles import StaticFiles
 import locale
 import time
+import os
 from datetime import date, datetime
 from typing import List
 import utils
@@ -35,6 +36,15 @@ def init_web(tracker_instance, db_module, stop_event_instance=None):
 templates.env.filters["hours"] = utils.format_hours
 templates.env.filters["date_custom"] = utils.format_date_custom
 templates.env.filters["month_name"] = utils.get_month_name
+
+def date_formatted_filter(date_str, lang="ru", date_format=None):
+    if date_format is None:
+        # Пытаемся получить из БД, если не передано (хотя фильтры обычно не асинхронны)
+        # Но так как фильтр используется в шаблонах, лучше передавать его явно или иметь дефолт
+        date_format = "dd.MM.yyyy"
+    return utils.format_date_custom(date_str, lang, date_format)
+
+templates.env.filters["date_formatted"] = date_formatted_filter
 
 async def is_authenticated(request: Request):
     """Проверка, авторизован ли пользователь."""
@@ -103,8 +113,16 @@ async def index(request: Request):
     theme = await db.get_setting("theme", "dark")
     i18n = utils.get_i18n(language)
     custom_title = await db.get_setting("custom_title", "PAcT")
+    date_format = await db.get_setting("date_format", "dd.MM.yyyy")
     stats = await db.get_all_stats()
     grouped = await utils.group_stats(stats, language)
+
+    # Применяем формат даты ко всем уровням
+    for month in grouped:
+        for week in month['weeks']:
+            for day in week['days']:
+                day['formatted_date'] = utils.format_date_custom(day['date'], language, date_format)
+
     idle_threshold = await db.get_setting("idle_threshold", "60")
     visible_columns = (await db.get_setting("visible_columns", "active_seconds,idle_seconds,locked_seconds,sleep_seconds")).split(",")
     password_protection_enabled = (await db.get_setting("password_protection_enabled", "false")).lower() == "true"
@@ -120,10 +138,10 @@ async def index(request: Request):
             "language": language,
             "theme": theme,
             "i18n": i18n,
-            "password_protection_enabled": password_protection_enabled
+            "password_protection_enabled": password_protection_enabled,
+            "date_format": date_format
         }
     )
-
 @app.get("/settings", response_class=HTMLResponse)
 async def settings_page(request: Request):
     if not await is_authenticated(request):
@@ -139,14 +157,23 @@ async def settings_page(request: Request):
     custom_title = await db.get_setting("custom_title", "PAcT")
     track_window_activity = (await db.get_setting("track_window_activity", "true")).lower() == "true"
     password_protection_enabled = (await db.get_setting("password_protection_enabled", "false")).lower() == "true"
+    auto_backup_enabled = (await db.get_setting("auto_backup_enabled", "false")).lower() == "true"
+    date_format = await db.get_setting("date_format", "dd.MM.yyyy")
     has_password = (await db.get_setting("app_password_hash")) is not None
     visible_columns = (await db.get_setting("visible_columns", "active_seconds,idle_seconds,locked_seconds,sleep_seconds")).split(",")
+    backups = []
+    for b in await db.list_backups():
+        b['date_display'] = utils.format_date_custom(b['date'].split(' ')[0], language, date_format) + " " + b['date'].split(' ')[1]
+        backups.append(b)
     
     all_columns = [
         ("active_seconds", i18n["active"]),
         ("idle_seconds", i18n["idle"]),
         ("locked_seconds", i18n["locked"]),
-        ("sleep_seconds", i18n["sleep"])
+        ("no_session_seconds", i18n["no_session"]),
+        ("sleep_seconds", i18n["sleep"]),
+        ("shutdown_seconds", i18n["shutdown"]),
+        ("unknown_seconds", i18n["unknown"]),
     ]
     
     return templates.TemplateResponse(
@@ -159,15 +186,18 @@ async def settings_page(request: Request):
             "flush_interval": flush_interval,
             "track_window_activity": track_window_activity,
             "password_protection_enabled": password_protection_enabled,
+            "auto_backup_enabled": auto_backup_enabled,
             "has_password": has_password,
             "custom_title": custom_title,
             "visible_columns": visible_columns,
             "all_columns": all_columns,
+            "backups": backups,
             "is_paused": tracker.paused if tracker else False,
             "language": language,
             "theme": theme,
             "i18n": i18n,
-            "password_protection_enabled": password_protection_enabled
+            "password_protection_enabled": password_protection_enabled,
+            "date_format": date_format
         }
     )
 
@@ -180,9 +210,11 @@ async def save_settings(
     flush_interval: str = Form(...),
     track_window_activity: bool = Form(False),
     password_protection_enabled: bool = Form(False),
+    auto_backup_enabled: bool = Form(False),
     custom_title: str = Form("PAcT"),
     language: str = Form("ru"),
     theme: str = Form("dark"),
+    date_format: str = Form("dd.MM.yyyy"),
     visible_columns: List[str] = Form([])
 ):
     if not await is_authenticated(request):
@@ -261,6 +293,8 @@ async def save_settings(
                 "theme": theme,
                 "i18n": i18n,
                 "password_protection_enabled": password_protection_enabled,
+                "auto_backup_enabled": auto_backup_enabled,
+                "date_format": date_format,
                 "has_password": has_password,
                 "errors": errors
             }
@@ -272,9 +306,11 @@ async def save_settings(
     await db.set_setting("flush_interval", flush_interval)
     await db.set_setting("track_window_activity", "true" if track_window_activity else "false")
     await db.set_setting("password_protection_enabled", "true" if password_protection_enabled else "false")
+    await db.set_setting("auto_backup_enabled", "true" if auto_backup_enabled else "false")
     await db.set_setting("custom_title", custom_title)
     await db.set_setting("language", language)
     await db.set_setting("theme", theme)
+    await db.set_setting("date_format", date_format)
     await db.set_setting("visible_columns", ",".join(visible_columns))
     
     if tracker:
@@ -327,8 +363,10 @@ async def reset_settings(request: Request):
     default_lang = "ru"
     default_theme = "dark"
     default_title = "PAcT"
+    default_date_format = "dd.MM.yyyy"
     default_columns = "active_seconds,idle_seconds,locked_seconds,sleep_seconds"
     default_password_protection = "false"
+    default_auto_backup = "false"
     
     await db.set_setting("idle_threshold", default_idle)
     await db.set_setting("activity_grace_period", default_grace)
@@ -336,9 +374,11 @@ async def reset_settings(request: Request):
     await db.set_setting("flush_interval", default_flush)
     await db.set_setting("track_window_activity", default_track)
     await db.set_setting("password_protection_enabled", default_password_protection)
+    await db.set_setting("auto_backup_enabled", default_auto_backup)
     await db.set_setting("custom_title", default_title)
     await db.set_setting("language", default_lang)
     await db.set_setting("theme", default_theme)
+    await db.set_setting("date_format", default_date_format)
     await db.set_setting("visible_columns", default_columns)
     
     if tracker:
@@ -357,6 +397,7 @@ async def get_day_details(request: Request, day_date: str):
     
     language = await db.get_setting("language", "ru")
     theme = await db.get_setting("theme", "dark")
+    date_format = await db.get_setting("date_format", "dd.MM.yyyy")
     i18n = utils.get_i18n(language)
     log = await db.get_activity_log(day_date)
     # Переводим состояния
@@ -390,6 +431,7 @@ async def get_day_details(request: Request, day_date: str):
         context={
             "log": log,
             "day_date": day_date,
+            "formatted_date": utils.format_date_custom(day_date, language, date_format),
             "current_interval": current_interval,
             "language": language,
             "theme": theme,
@@ -444,9 +486,17 @@ async def get_stats(request: Request):
         return HTMLResponse(content="Unauthorized", status_code=401)
     
     language = await db.get_setting("language", "ru")
+    date_format = await db.get_setting("date_format", "dd.MM.yyyy")
     i18n = utils.get_i18n(language)
     stats = await db.get_all_stats()
     grouped = await utils.group_stats(stats, language)
+
+    # Применяем формат даты ко всем уровням
+    for month in grouped:
+        for week in month['weeks']:
+            for day in week['days']:
+                day['formatted_date'] = utils.format_date_custom(day['date'], language, date_format)
+
     visible_columns = (await db.get_setting("visible_columns", "active_seconds,idle_seconds,locked_seconds,sleep_seconds")).split(",")
     return templates.TemplateResponse(
         request=request,
@@ -488,6 +538,8 @@ async def get_state(request: Request):
         h = idle_duration // 3600
         m = (idle_duration % 3600) // 60
         s = idle_duration % 60
+        
+        # Локализация формата времени простоя
         if h > 0:
             time_str = f"{h:02}:{m:02}:{s:02}"
         else:
@@ -520,6 +572,10 @@ async def get_window_stats_endpoint(request: Request, start: str, end: str):
     sorted_apps = sorted(app_stats.items(), key=lambda x: x[1], reverse=True)
     
     # Форматируем для ответа
+    date_format = await db.get_setting("date_format", "dd.MM.yyyy")
+    for item in timeline:
+        item['date'] = utils.format_date_custom(item['date'], language, date_format)
+
     chart_data = {
         "labels": [x[0] for x in sorted_apps[:10]], # Топ 10 приложений
         "values": [round(x[1] / 3600.0, 2) for x in sorted_apps[:10]]
@@ -557,3 +613,47 @@ async def resume_monitoring(request: Request):
     if tracker:
         tracker.resume()
     return {"status": "resumed"}
+
+@app.post("/api/backups/create")
+async def create_backup_endpoint(request: Request):
+    if not await is_authenticated(request):
+        return JSONResponse({"status": "error", "message": "Unauthorized"}, status_code=401)
+    
+    filename = await db.create_backup()
+    if filename:
+        return RedirectResponse(url="/settings", status_code=303)
+    return JSONResponse({"status": "error", "message": "Failed to create backup"}, status_code=500)
+
+@app.get("/api/backups/download/{filename}")
+async def download_backup(request: Request, filename: str):
+    if not await is_authenticated(request):
+        return JSONResponse({"status": "error", "message": "Unauthorized"}, status_code=401)
+    
+    path = os.path.join(db.get_db_path(), "backups", filename)
+    if os.path.exists(path):
+        return FileResponse(path, filename=filename)
+    return JSONResponse({"status": "error", "message": "File not found"}, status_code=404)
+
+@app.post("/api/backups/restore/{filename}")
+async def restore_backup_endpoint(request: Request, filename: str):
+    if not await is_authenticated(request):
+        return JSONResponse({"status": "error", "message": "Unauthorized"}, status_code=401)
+    
+    success = await db.restore_backup(filename)
+    if success:
+        # После восстановления БД лучше перезагрузить приложение или хотя бы уведомить пользователя, 
+        # что данные могут не обновиться в памяти мгновенно.
+        # Но для простоты просто перенаправляем.
+        return RedirectResponse(url="/settings?restored=1", status_code=303)
+    return JSONResponse({"status": "error", "message": "Failed to restore backup"}, status_code=500)
+
+@app.post("/api/backups/delete/{filename}")
+async def delete_backup_endpoint(request: Request, filename: str):
+    if not await is_authenticated(request):
+        return JSONResponse({"status": "error", "message": "Unauthorized"}, status_code=401)
+    
+    path = os.path.join(db.get_db_path(), "backups", filename)
+    if os.path.exists(path):
+        os.remove(path)
+        return RedirectResponse(url="/settings", status_code=303)
+    return JSONResponse({"status": "error", "message": "File not found"}, status_code=404)

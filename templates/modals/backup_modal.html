@@ -1,0 +1,96 @@
+<!-- Modal for Backups -->
+<dialog id="backup-modal">
+    <article style="width: 800px; max-width: 95vw; padding: 30px;">
+        <div class="modal-header-accent" style="margin: -30px -30px 15px -30px;">
+            <h3>💾 {{ i18n.backups }}</h3>
+            <a href="#close" aria-label="Close" class="close" onclick="closeBackupModal()"></a>
+        </div>
+        
+        <div style="display: flex; flex-direction: column; gap: 15px;">
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+                <div style="font-size: 0.9rem; opacity: 0.8;">
+                    {{ i18n.total_count.replace('{count}', backups|length|string) }}
+                </div>
+                <form action="/api/backups/create" method="post" style="margin: 0;">
+                    <button type="submit" class="btn-compact" style="width: auto; margin: 0; background: var(--primary);">
+                        ➕ {{ i18n.create_backup }}
+                    </button>
+                </form>
+            </div>
+            
+            {% if backups %}
+            <div class="overflow-auto" style="max-height: 400px; border: 1px solid var(--muted-border-color); border-radius: var(--border-radius);">
+                <table style="margin-bottom: 0; font-size: 0.9rem;">
+                    <thead>
+                        <tr>
+                            <th>{{ i18n.backup_date }}</th>
+                            <th>{{ i18n.backup_size }}</th>
+                            <th style="text-align: right;">{{ i18n.details }}</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for backup in backups %}
+                        <tr>
+                            <td>{{ backup.date_display }}</td>
+                            <td>{{ (backup.size / 1024 / 1024) | round(2) }} MB</td>
+                            <td style="text-align: right;">
+                                <div style="display: flex; gap: 8px; justify-content: flex-end;">
+                                    <a href="/api/backups/download/{{ backup.filename }}" class="outline btn-compact" 
+                                       style="width: auto; padding: 2px 10px; font-size: 0.8rem;" title="{{ i18n.download }}">💾</a>
+                                    
+                                    <form action="/api/backups/restore/{{ backup.filename }}" method="post" style="margin: 0;" 
+                                          onsubmit="return confirm('{{ i18n.confirm_restore }}')">
+                                        <button type="submit" class="outline secondary btn-compact" 
+                                                style="width: auto; padding: 2px 10px; font-size: 0.8rem;" title="{{ i18n.restore }}">🔄</button>
+                                    </form>
+                                    
+                                    <form action="/api/backups/delete/{{ backup.filename }}" method="post" style="margin: 0;" 
+                                          onsubmit="return confirm('{{ i18n.confirm_delete }}')">
+                                        <button type="submit" class="outline contrast btn-compact" 
+                                                style="width: auto; padding: 2px 10px; font-size: 0.8rem;" title="{{ i18n.delete }}">🗑️</button>
+                                    </form>
+                                </div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% else %}
+            <div style="text-align: center; padding: 40px; opacity: 0.5;">
+                <p>{{ i18n.no_backups }}</p>
+            </div>
+            {% endif %}
+            
+            <footer style="margin-top: 10px; text-align: right; background: transparent; border-top: none; padding: 0;">
+                <button type="button" class="secondary outline btn-compact" onclick="closeBackupModal()">{{ i18n.cancel }}</button>
+            </footer>
+        </div>
+    </article>
+</dialog>
+
+<script>
+    function openBackupModal() {
+        const modal = document.getElementById('backup-modal');
+        if (modal) {
+            modal.setAttribute('open', 'true');
+            document.documentElement.classList.add('modal-is-open');
+        }
+    }
+
+    function closeBackupModal() {
+        const modal = document.getElementById('backup-modal');
+        if (modal) {
+            modal.removeAttribute('open');
+            document.documentElement.classList.remove('modal-is-open');
+        }
+    }
+    
+    // Close on click outside
+    document.addEventListener('click', event => {
+        const modal = document.getElementById('backup-modal');
+        if (event.target === modal) {
+            closeBackupModal();
+        }
+    });
+</script>

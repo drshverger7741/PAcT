@@ -22,10 +22,37 @@ def format_hours(seconds: float) -> str:
     if seconds is None: return "0.00"
     return f"{seconds / 3600.0:.2f}"
 
-def format_date_custom(date_str: str, lang="ru") -> str:
-    """вт. 11 августа 2026"""
+def format_date_custom(date_str: str, lang="ru", date_format: str = None) -> str:
+    """Отображение даты согласно формату. По умолчанию: вт. 11 августа 2026"""
     try:
         dt = date.fromisoformat(date_str)
+        if date_format:
+            # Замена форматов типа dd.MM.yyyy на %d.%m.%Y
+            # Но мы сделаем замену вручную для локализованных частей, чтобы не зависеть от системной локали
+            i18n = TRANSLATIONS.get(lang, TRANSLATIONS["ru"])
+            
+            res = date_format
+            # Полное название месяца
+            if 'MMMM' in res:
+                res = res.replace('MMMM', i18n["months_full"][dt.month-1])
+            # Сокращенное название месяца
+            elif 'MMM' in res:
+                res = res.replace('MMM', i18n["months"][dt.month-1])
+            # Номер месяца
+            res = res.replace('MM', f"{dt.month:02d}")
+            
+            # Год
+            res = res.replace('yyyy', f"{dt.year}")
+            res = res.replace('yy', f"{dt.year % 100:02d}")
+            
+            # День
+            res = res.replace('dd', f"{dt.day:02d}")
+            
+            # Время (хотя в дате его обычно нет, на всякий случай)
+            res = res.replace('HH', "00").replace('mm', "00").replace('ss', "00")
+            
+            return res
+
         i18n = TRANSLATIONS.get(lang, TRANSLATIONS["ru"])
         months = i18n["months"]
         weekdays = i18n["weekdays"]

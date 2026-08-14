@@ -90,6 +90,8 @@ $pythonPath = Join-Path (Get-Location) "venv\Scripts\pythonw.exe"; $scriptPath =
 3. Результат будет в папке `dist/PAcT.exe`. Этот файл можно переносить и запускать на любом компьютере с Windows (10/11).
 
 ## Разработка
+- `TODO.md` — список планируемых задач и идей.
+- `STATUSES_README.md` — подробное описание логики статусов.
 - `tracker.py` — логика отслеживания (WinAPI).
 - `db.py` — работа с SQLite (aiosqlite).
 - `web.py` — API и веб-сервер (FastAPI).

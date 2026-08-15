@@ -38,6 +38,7 @@ def is_port_in_use(port: int) -> bool:
 async def main():
     # Инициализация БД
     await db.init_db()
+    logger.info("Database path: %s", db.DB_PATH)
 
     # Проверка занятости выбранного в настройках порта
     try:

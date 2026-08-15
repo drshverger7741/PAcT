@@ -11,9 +11,19 @@ logger = logging.getLogger(__name__)
 DB_FILENAME = "pact_db.db"
 
 def get_db_path() -> str:
-    """Возвращает путь к папке приложения."""
-    if getattr(sys, 'frozen', False):
-        return os.path.dirname(sys.executable)
+    """Возвращает постоянную папку данных приложения."""
+    # PyInstaller выставляет sys.frozen, а Nuitka в некоторых режимах
+    # предоставляет только __compiled__. В обоих случаях папка рядом с
+    # исполняемым файлом может быть временной или недоступной для записи.
+    if getattr(sys, 'frozen', False) or "__compiled__" in globals():
+        # Onefile-приложение распаковывается во временную папку при каждом
+        # запуске. Данные нельзя хранить относительно этой папки.
+        data_dir = os.path.join(
+            os.environ.get("LOCALAPPDATA", os.path.expanduser("~")),
+            "PAcT",
+        )
+        os.makedirs(data_dir, exist_ok=True)
+        return data_dir
     return os.path.dirname(os.path.abspath(__file__))
 
 DB_PATH = os.path.join(get_db_path(), DB_FILENAME)
